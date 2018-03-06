@@ -6,7 +6,7 @@ WasmVideoEncoder(Module)
 
 let encodedFrames = 0
 let initialized = false
-let startTime
+let startTime, frameSize
 
 Module["onRuntimeInitialized"] = () => { 
     postMessage({action: "loaded"})
@@ -15,6 +15,8 @@ Module["onRuntimeInitialized"] = () => {
 openVideo = (config) => {
     let { w, h, fps, bitrate } = config
     Module._open_video(w, h, fps, bitrate);
+
+    frameSize = w*h*4
 }
 
 openAudio = (config) => {
@@ -50,20 +52,19 @@ close_stream = () => {
 }
 
 addFrame = (buffer) => {
-    if(initialized) {
-        if(encodedFrames === 0)
-            startTime = performance.now()
-        try {
-            var encodedBuffer_p = Module._malloc(buffer.length)
-            Module.HEAPU8.set(buffer, encodedBuffer_p)
-            Module._add_frame(encodedBuffer_p)
-        }finally {
-            Module._free(encodedBuffer_p)
-            encodedFrames++;
-        }
+    let nrFrames = buffer.length / frameSize
+    console.log("--")
+    try {
+        var encodedBuffer_p = Module._malloc(buffer.length)
+        Module.HEAPU8.set(buffer, encodedBuffer_p)
+        Module._add_frame(encodedBuffer_p, nrFrames)
+    }finally {
+        Module._free(encodedBuffer_p)
+        encodedFrames++;
     }
     //hack to avoid memory leaks
    postMessage(buffer.buffer, [buffer.buffer])
+   postMessage({action: "ready"})
 }
 
 close = () => {
