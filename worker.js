@@ -66,7 +66,6 @@ addFrame = (buffer) => {
 }
 
 close = () => {
-    console.log("encoded frames", encodedFrames)
     Module._write_audio_frame()
     let vid = close_stream()
     Module._free_buffer();
