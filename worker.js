@@ -1,5 +1,5 @@
 importScripts("WasmVideoEncoder.js")
-
+console.log("opmdg")
 
 let Module = {}
 WasmVideoEncoder(Module)
@@ -53,7 +53,6 @@ close_stream = () => {
 
 addFrame = (buffer) => {
     let nrFrames = buffer.length / frameSize
-    console.log("--")
     try {
         var encodedBuffer_p = Module._malloc(buffer.length)
         Module.HEAPU8.set(buffer, encodedBuffer_p)
@@ -68,7 +67,6 @@ addFrame = (buffer) => {
 }
 
 close = () => {
-    console.log("frames encoded: ", encodedFrames, " seconds taken: ", (performance.now() - startTime) / 1000)
     Module._write_audio_frame()
     let vid = close_stream()
     Module._free_buffer();
