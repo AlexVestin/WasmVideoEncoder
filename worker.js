@@ -1,8 +1,7 @@
-importScripts("WasmVideoEncoder.js")
-console.log("opmdg")
+importScripts("WasmVideoEncoderTest2.js")
 
 let Module = {}
-WasmVideoEncoder(Module)
+WasmVideoEncoderTest2(Module)
 
 let encodedFrames = 0
 let initialized = false
@@ -14,7 +13,7 @@ Module["onRuntimeInitialized"] = () => {
 
 openVideo = (config) => {
     let { w, h, fps, bitrate } = config
-    Module._open_video(w, h, fps, bitrate);
+    Module._open_video(w, h, fps, bitrate, "ultrafast");
 
     frameSize = w*h*4
 }
@@ -67,6 +66,7 @@ addFrame = (buffer) => {
 }
 
 close = () => {
+    console.log("encoded frames", encodedFrames)
     Module._write_audio_frame()
     let vid = close_stream()
     Module._free_buffer();
