@@ -12,8 +12,8 @@ Module["onRuntimeInitialized"] = () => {
 };
 
 openVideo = (config) => {
-    let { w, h, fps, bitrate } = config
-    Module._open_video(w, h, fps, bitrate, "ultrafast");
+    let { w, h, fps, bitrate, presetIdx } = config
+    Module._open_video(w, h, fps, bitrate, presetIdx);
 
     frameSize = w*h*4
 }
