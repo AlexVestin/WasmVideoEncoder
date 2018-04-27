@@ -6,7 +6,6 @@ Module["onRuntimeInitialized"] = () => {
     postMessage({action: "loaded"})
 };
 
-
 function getNextFrame() {
     var buf;
     var size = 0, data = 0;
@@ -23,6 +22,7 @@ function getNextFrame() {
 } 
 
 function extractAudio() {
+    
     var size_p   = Module._malloc(4)
     var bitrate_p   = Module._malloc(4)
 
@@ -51,7 +51,7 @@ onmessage = (e) => {
     if(initBuffer) {
         try {
             var buffer_p = Module._malloc(data.length)
-            var video_info_p = Module._malloc(4 * 6)
+            var video_info_p = Module._malloc(4 * 7)
 
             Module.HEAPU8.set(data, buffer_p)
 
@@ -73,7 +73,7 @@ onmessage = (e) => {
             break;
         case "get_frame":
             const d = getNextFrame()
-            postMessage({action: "frame_decoded"})
+            postMessage({action: "frame_decoded", frameId: data.frameId})
             postMessage(d, [d.buffer]);
             break;
         case "close":
