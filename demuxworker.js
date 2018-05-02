@@ -34,7 +34,6 @@ function extractAudio() {
     
     // Cant send WASM array, neeed to copy
     const data = new Uint8Array( Module.HEAPU8.subarray(buffer_p, buffer_p + bufferSize * 2))
-
     const right = new Float32Array( data.buffer.slice(), 0, bufferSize / 4) 
     const left = new Float32Array( data.buffer.slice(), bufferSize,  bufferSize / 4)
     postMessage({action: "audio_extracted", info: bitrate})
@@ -55,9 +54,8 @@ onmessage = (e) => {
 
             Module.HEAPU8.set(data, buffer_p)
 
-            console.log("initing buffer with size: ", data.length)
             Module._init_muxer(buffer_p, data.length, video_info_p)
-            const info = new Int32Array(Module.HEAPU8.buffer, video_info_p, 6)  
+            const info = new Int32Array(Module.HEAPU8.buffer, video_info_p, 7)  
             postMessage({action: "init", info: info})
         }finally {
             //Module._free(buffer_p)
