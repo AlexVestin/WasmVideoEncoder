@@ -6,6 +6,7 @@ WasmVideoEncoderTest2(Module)
 let encodedFrames = 0
 let initialized = false
 let startTime, frameSize
+let useAudio = false
 
 Module["onRuntimeInitialized"] = () => { 
     postMessage({action: "loaded"})
@@ -66,7 +67,7 @@ addFrame = (buffer) => {
 }
 
 close = () => {
-    Module._write_audio_frame()
+    if(useAudio)Module._write_audio_frame()
     let vid = close_stream()
     Module._free_buffer();
     postMessage({action:"return", data: vid.buffer})
@@ -82,8 +83,12 @@ onmessage = (e) => {
     switch(data.action) {
         case "init":
             openVideo(data.data.videoConfig)
-            if(data.data.audioConfig !== null)
+            if(data.data.audioConfig !== null){
                 openAudio(data.data.audioConfig)
+                useAudio = true
+            }else {
+                useAudio = false
+            }
             writeHeader()
             postMessage({action: "initialized"})
             break;
