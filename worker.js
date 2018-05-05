@@ -1,4 +1,4 @@
-importScripts("../WasmVideoEncoderTest2.js")
+importScripts("WasmVideoEncoderTest2.js")
 
 let Module = {}
 WasmVideoEncoderTest2(Module)
