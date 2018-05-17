@@ -1,13 +1,12 @@
-importScripts("WasmVideoEncoderTest2.js")
+importScripts("WasmEncoder.js")
 
 let Module = {}
-WasmVideoEncoderTest2(Module)
+WasmEncoder(Module)
 
-let encodedFrames = 0
-let initialized = false
-let startTime, frameSize
+console.log("nw ")
 let useAudio = false
 
+const fileType = 1
 Module["onRuntimeInitialized"] = () => { 
     postMessage({action: "loaded"})
 };
@@ -15,24 +14,27 @@ Module["onRuntimeInitialized"] = () => {
 openVideo = (config) => {
     let { w, h, fps, bitrate, presetIdx } = config
 
-    Module._open_video(w, h, fps, bitrate, presetIdx);
+    Module._open_video(w, h, fps, bitrate, presetIdx, fileType, fileType );
     frameSize = w*h*4
 }
 
-openAudio = (config) => {
-    let { bitrate, left, right, samplerate, duration } = config; 
-    let durationInBytes = Math.floor(duration * samplerate)
-    left = left.subarray(0, durationInBytes)
-    right = right.subarray(0, durationInBytes)
-    
-    try {
-      var left_p = Module._malloc(left.length * 4)
-      Module.HEAPF32.set(left, left_p >> 2)
-      
-      var right_p = Module._malloc(right.length * 4)
-      Module.HEAPF32.set(right, right_p >> 2)
-      Module._open_audio(left_p, right_p, left.length, samplerate, 2, bitrate)
 
+let audioFramesRecv = 1,  left, encodeVideo
+
+addAudioFrame = (buffer) => {
+    var left_p = Module._malloc(left.length * 4)
+    Module.HEAPF32.set(left, left_p >> 2)
+    var right_p = Module._malloc(buffer.length * 4)
+    Module.HEAPF32.set(buffer, right_p >> 2)
+    Module._add_audio_frame(left_p, right_p, left.length)
+    postMessage({action: "ready"})
+}
+
+
+openAudio = (config) => {
+    const { bitrate, samplerate } = config; 
+    try {
+      Module._open_audio(samplerate, 2, bitrate, fileType)
     }catch(err) {
       console.log(err)
     }
@@ -45,21 +47,21 @@ writeHeader = () => {
 } 
 
 close_stream = () => {
-    var video_p, size;
-    size = Module._close_stream();
-    video_p = Module._get_buffer();
+    var video_p, size_p, size;
+    video_p = Module._close_stream(size_p);
+    size = Module.HEAP32[size_p >> 2]
     return  new Uint8Array(Module.HEAPU8.subarray(video_p, video_p + size))
 }
 
-addFrame = (buffer) => {
-    let nrFrames = buffer.length / frameSize
+
+
+addVideoFrame = (buffer) => {
     try {
         var encodedBuffer_p = Module._malloc(buffer.length)
         Module.HEAPU8.set(buffer, encodedBuffer_p)
-        Module._add_frame(encodedBuffer_p, nrFrames)
+        Module._add_video_frame(encodedBuffer_p)
     }finally {
         Module._free(encodedBuffer_p)
-        encodedFrames++;
     }
     //hack to avoid memory leaks
    postMessage(buffer.buffer, [buffer.buffer])
@@ -67,20 +69,33 @@ addFrame = (buffer) => {
 }
 
 close = () => {
-    if(useAudio)Module._write_audio_frame()
     let vid = close_stream()
     Module._free_buffer();
     postMessage({action:"return", data: vid.buffer})
 }
 
 onmessage = (e) => {
+    
     const { data } = e
     if(data.action === undefined){
-        addFrame(data)
+        if(encodeVideo) {
+            addVideoFrame(data)
+        }else {
+            if(audioFramesRecv === 1)left = data
+            if(audioFramesRecv === 0)addAudioFrame(data)
+            audioFramesRecv--;
+        }
         return
     }
     
     switch(data.action) {
+        case "audio":
+            encodeVideo = false;
+            audioFramesRecv = 1
+            break;
+        case "video":
+            encodeVideo = true;
+            break;
         case "init":
             openVideo(data.data.videoConfig)
             if(data.data.audioConfig !== null){
