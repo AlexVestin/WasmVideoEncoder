@@ -3,7 +3,6 @@ importScripts("WasmEncoder.js")
 let Module = {}
 WasmEncoder(Module)
 
-console.log("nw ")
 let useAudio = false
 
 const fileType = 1
@@ -19,14 +18,21 @@ openVideo = (config) => {
 }
 
 
-let audioFramesRecv = 1,  left, encodeVideo
+let audioFramesRecv = 1,  left, encodeVideo, videoFramesEncoded = 0, audioFramesEncoded = 0
+let aduioTimeSum = 0, videoTimeSum = 0
+let debug = false
 
 addAudioFrame = (buffer) => {
+    const t = performance.now()
     var left_p = Module._malloc(left.length * 4)
     Module.HEAPF32.set(left, left_p >> 2)
     var right_p = Module._malloc(buffer.length * 4)
     Module.HEAPF32.set(buffer, right_p >> 2)
     Module._add_audio_frame(left_p, right_p, left.length)
+    const delta = performance.now() - t
+    aduioTimeSum+= delta
+    if(audioFramesEncoded++ % 25 === 0 && debug) 
+        console.log("Audio added, time taken: ", delta, " average: ", aduioTimeSum / audioFramesEncoded)
     postMessage({action: "ready"})
 }
 
@@ -56,6 +62,7 @@ close_stream = () => {
 
 
 addVideoFrame = (buffer) => {
+    const t = performance.now()
     try {
         var encodedBuffer_p = Module._malloc(buffer.length)
         Module.HEAPU8.set(buffer, encodedBuffer_p)
@@ -65,6 +72,10 @@ addVideoFrame = (buffer) => {
     }
     //hack to avoid memory leaks
    postMessage(buffer.buffer, [buffer.buffer])
+   const delta = performance.now() - t
+   videoTimeSum+= delta
+   if(videoFramesEncoded++ % 25 === 0 && debug) 
+        console.log("Video added, time taken: ", delta, " average: ", videoTimeSum / videoFramesEncoded)
    postMessage({action: "ready"})
 }
 
