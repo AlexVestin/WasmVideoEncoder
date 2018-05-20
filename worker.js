@@ -1,7 +1,9 @@
-importScripts("WasmEncoder.js")
+importScripts("WasmEncoderJS.js")
 
 let Module = {}
-WasmEncoder(Module)
+WasmEncoderJS(Module)
+
+let usingJS = true
 
 let useAudio = false
 
@@ -10,11 +12,14 @@ Module["onRuntimeInitialized"] = () => {
     postMessage({action: "loaded"})
 };
 
+if(usingJS) {
+    postMessage({action: "loaded"})
+}
 openVideo = (config) => {
     let { w, h, fps, bitrate, presetIdx } = config
 
-    console.log(config)
     Module._open_video(w, h, fps, bitrate, presetIdx, fileType, fileType );
+    frameSize = w*h*4
 }
 
 
@@ -86,7 +91,6 @@ close = () => {
 }
 
 onmessage = (e) => {
-    
     const { data } = e
     if(data.action === undefined){
         if(encodeVideo) {
