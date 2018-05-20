@@ -13,8 +13,8 @@ Module["onRuntimeInitialized"] = () => {
 openVideo = (config) => {
     let { w, h, fps, bitrate, presetIdx } = config
 
+    console.log(config)
     Module._open_video(w, h, fps, bitrate, presetIdx, fileType, fileType );
-    frameSize = w*h*4
 }
 
 
