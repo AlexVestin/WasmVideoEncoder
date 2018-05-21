@@ -1,10 +1,9 @@
-importScripts("WasmEncoderJS.js")
+importScripts("WasmEncoder1.js")
 
 let Module = {}
-WasmEncoderJS(Module)
+WasmEncoder1(Module)
 
-let usingJS = true
-
+let usingJS = false
 let useAudio = false
 
 const fileType = 1
