@@ -1,0 +1,97 @@
+
+FFMPEG_MP4_PC_PATH = ../../lib/pkgconfig
+
+COMMON_FILTERS = aresample scale crop overlay
+COMMON_DEMUXERS = matroska ogg avi mov flv mpegps image2 mp3 
+
+#git clone https://git.ffmpeg.org/ffmpeg.git dependencies/ffmpeg
+
+COMMON_DECODERS = \
+	vp8 vp9 theora \
+	mpeg2video mpeg4 h264 hevc \
+	png mjpeg \
+	vorbis opus \
+	mp3 ac3 aac ass ssa srt webvtt
+
+all: ffmpeg
+
+EM = \
+	--cc=emcc \
+	
+
+FFMPEG_COMMON_ARGS = \
+	--enable-cross-compile \
+	--arch=x86 \
+	--disable-runtime-cpudetect \
+	--disable-asm \
+	--disable-fast-unaligned \
+	--disable-pthreads \
+	--disable-w32threads \
+	--disable-os2threads \
+	--disable-debug \
+	--disable-stripping \
+	\
+	--disable-all \
+	--enable-ffmpeg \
+	--enable-avcodec \
+	--enable-avformat \
+	--enable-avutil \
+	--enable-swresample \
+	--enable-swscale \
+	--enable-avfilter \
+	--disable-network \
+	--disable-d3d11va \
+	--disable-dxva2 \
+	--disable-vaapi \
+	--disable-vdpau \
+	--disable-protocol=file \
+	--disable-bzlib \
+	--disable-iconv \
+	--disable-libxcb \
+	--disable-lzma \
+	--disable-sdl2 \
+	--disable-securetransport \
+	--disable-xlib \
+	--disable-zlib
+
+
+FILES = test/demux2.c test/bonus.c
+INCLUDES = -I/home/alex/build/include -L/home/alex/build/lib \
+
+PKG = `pkg-config --libs libavcodec libavformat libswscale libswresample` \
+
+demux:
+	gcc $(FILES) $(INCLUDES) $(PKG)
+
+ffmpeg:
+	cd dependencies/ffmpeg && \
+	git reset --hard && \
+	PKG_CONFIG_PATH=$(FFMPEG_MP4_PC_PATH) ./configure \
+		--prefix="$$(pwd)/../../" \
+		$(FFMPEG_COMMON_ARGS) \
+		$(addprefix --enable-decoder=,$(COMMON_DECODERS)) \
+		$(addprefix --enable-demuxer=,$(COMMON_DEMUXERS)) \
+		--enable-gpl \
+		--extra-cflags="-I../../include" \
+		--extra-ldflags="-L../../lib" \
+		&& \
+	make -j8 && \
+	make install
+
+DECODE_BC = ffmpeg.bc
+DECODE_FUNCTIONS ="['_init_muxer', '_get_next_frame', '_set_frame', '_close_muxer']"
+DECODE_FILES = ./test/demux2.c
+
+DECODE_COMMON = \
+	--memory-init-file 0 \
+	-Oz \
+	-o  Demux2.js\
+	-s WASM=1 \
+	-s ALLOW_MEMORY_GROWTH=1 \
+	-s EXPORTED_FUNCTIONS=$(DECODE_FUNCTIONS) \
+	-s MODULARIZE=1 \
+	-s EXPORT_NAME="'Demuxer'" \
+	-s ASSERTIONS=2
+
+wasm.js:
+	emcc $(INCLUDES) $(DECODE_FILES) $(DECODE_COMMON) $(DECODE_BC)

@@ -1,0 +1,14 @@
+
+
+
+webassembly/build/em/bin/
+webassembly/build/em/lib/
+webassembly/build/em/include/
+webassembly/build/em/share/
+
+webassembly/build/reg/bin/
+webassembly/build/reg/lib/
+webassembly/build/reg/include/
+webassembly/build/reg/share/
+
+webassembly/build/dependencies/

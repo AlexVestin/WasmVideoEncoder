@@ -1,0 +1,16 @@
+[submodule "webassembly/build/dependencies/ffmpeg"]
+	path = webassembly/build/dependencies/ffmpeg
+	url = https://git.ffmpeg.org/ffmpeg.git
+[submodule "webassembly/build/dependencies/x264"]
+	path = webassembly/build/dependencies/x264
+	url = https://git.videolan.org/git/x264.git
+[submodule "webassembly/build/dependencies/lame"]
+	path = webassembly/build/dependencies/lame
+	url = https://github.com/rbrito/lame.git
+[submodule "webassembly/build/dependencies/libvpx"]
+	path = webassembly/build/dependencies/libvpx
+	url = https://chromium.googlesource.com/webm/libvpx
+[submodule "webassembly/build/dependencies/opus"]
+	path = webassembly/build/dependencies/opus
+	url = https://github.com/xiph/opus.git
+
