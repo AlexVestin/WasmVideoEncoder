@@ -12,17 +12,13 @@ ENCODE_FUNCTIONS = "[ \
 		'_write_header', '_set_audio']"
 
 ENCODE_COMMON = \
-	--memory-init-file 0 \
 	-o WasmEncoder1_t.js\
 	-s WASM=1 \
-	-s ALLOW_MEMORY_GROWTH=1 \
 	-s EXPORTED_FUNCTIONS=$(ENCODE_FUNCTIONS) \
 	-s MODULARIZE=1 \
 	-s EXPORT_NAME="'WasmEncoder1'" \
-	-s NO_FILESYSTEM=1 \
 	-s USE_PTHREADS=1 \
 	-s WASM_MEM_MAX=512MB \
-	-s ASSERTIONS=2
 
 DECODE_BC = ffmpeg_prod_demux.bc
 DECODE_FUNCTIONS ="['_init_muxer', '_get_next_frame', '_set_frame', '_close_muxer']"
