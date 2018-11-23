@@ -35,7 +35,6 @@ libvpx:
 		--prefix="$$(pwd)/../../em" \
 		--target=generic-gnu \
 		--disable-dependency-tracking \
-		--disable-multithread \
 		--disable-runtime-cpu-detect \
 		--enable-shared \
 		--disable-static \
@@ -78,7 +77,6 @@ libx264:
 		--disable-cli \
 		--enable-shared \
 		--disable-opencl \
-		--disable-thread \
 		--disable-asm \
 		\
 		--disable-avs \
@@ -99,9 +97,6 @@ FFMPEG_COMMON_ARGS = \
 	--disable-runtime-cpudetect \
 	--disable-asm \
 	--disable-fast-unaligned \
-	--disable-pthreads \
-	--disable-w32threads \
-	--disable-os2threads \
 	--disable-debug \
 	--disable-stripping \
 	\
