@@ -12,7 +12,7 @@ ENCODE_FUNCTIONS = "[ \
 		'_write_header', '_set_audio']"
 
 ENCODE_COMMON = \
-	-O3 --memory-init-file 0 \
+	--memory-init-file 0 \
 	-o WasmEncoder1_t.js\
 	-s WASM=1 \
 	-s ALLOW_MEMORY_GROWTH=1 \
