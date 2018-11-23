@@ -1,4 +1,4 @@
-ENCODE_BC = ffmpeg.bc
+ENCODE_BC = ffmpeg_t.bc
 ENCODE_DEPS = \
 	./build/em/lib/libmp3lame.so \
 	./build/em/lib/libx264.so \
