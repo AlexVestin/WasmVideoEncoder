@@ -22,7 +22,8 @@ ENCODE_COMMON = \
 	-s NO_FILESYSTEM=1 \
 	-s USE_PTHREADS=1 \
 	-s PTHREADS_POOL_SIZE=8 \
-	-s WASM_MEM_MAX=512MB
+	-s WASM_MEM_MAX=512MB \
+	-s ASSERTIONS=2
 
 DECODE_BC = ffmpeg_prod_demux.bc
 DECODE_FUNCTIONS ="['_init_muxer', '_get_next_frame', '_set_frame', '_close_muxer']"
