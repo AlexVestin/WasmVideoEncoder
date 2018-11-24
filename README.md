@@ -30,26 +30,35 @@ See ```webassembly/C/avio_write.c``` for the main code of the encoder and ```web
 - Code written by me is MIT, the license of the dependencies (ffmpeg, libvpx, lame etc.) varies.
 
 ### Build
-Makefile & patches from [ffmpeg.js}(https://github.com/Kagami/ffmpeg.js/) / [videoconverter.js](https://bgrins.github.io/videoconverter.js/)
+Makefile & patches from [ffmpeg.js](https://github.com/Kagami/ffmpeg.js/) / [videoconverter.js](https://bgrins.github.io/videoconverter.js/)
 ```
 apt-get update
 apt-get -y install wget python git automake libtool build-essential cmake libglib2.0-dev closure-compiler
 
-cd /root # or /home/whatever
-wget https://s3.amazonaws.com/mozilla-games/emscripten/releases/emsdk-portable.tar.gz
-tar xzvf emsdk-portable.tar.gz
-cd emsdk-portable
-./emsdk update
-./emsdk install latest
-./emsdk activate latest
-source ./emsdk_env.sh
+[[[install emsdk]]]
 
-cd /root # or /home/whatever
-git clone https://github.com/Kagami/ffmpeg.js.git
-cd ffmpeg.js
+cd [this repo]
 git submodule init
 git submodule update --recursive
 
-make all
+```
 
+### to run tests without Emscripten:
+```
+cd build/reg
+make 
+cd ../../C
+LD_LIBRARY_PATH=/WasmVideoEncoder/webassembly/build/reg/lib
+PKG_CONFIG_PATH=/WasmVideoEncoder/webassembly/build/reg/lib/pkgconfig
+export LD_LIBRARY_PATH
+export PKG_CONFIG_PATH
+make [your test]
+```
+
+### to build for exporting with Emscripten:
+```
+cd build/em
+make
+cd ../..
+make encode.js
 ```
