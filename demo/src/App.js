@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import * as FileSaver from "file-saver";
 import './App.css';
 import ButtonGroup from './buttons/buttons'
-import VideoEncoder from './videoencoder/videoencoder'
+import VideoEncoder from './videoencoder/videncoder'
 
 
 class App extends Component {
@@ -67,16 +67,20 @@ class App extends Component {
       gl.readPixels(0,0,this.width,this.height, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels);
 
       // queue in videoencoder
-      this.videoEncoder.queueFrame({type: "video", pixels: this.pixels});
+      this.videoEncoder.sendFrame({type: "video", pixels: this.pixels});
       this.frames++;
       if(this.frames % 60 === 0)
         this.setState({frames: this.frames});
+      
+        requestAnimationFrame(this.getFrame);
     }else {
-      this.videoEncoder.close(this.saveToFile);
+      this.saveToFile(this.videoEncoder.close());
       this.renderer.setSize(640, 480);
       this.setState({frames: 0, encoding: false});
       this.renderScene();
     }
+
+    
   }
   saveToFile = (vid) => {
     const s = (performance.now() - this.startTime) / 1000
@@ -96,6 +100,7 @@ class App extends Component {
     // second parameter is audioConfig which looks like audioConfig: { birate: xxxxx, sampleRate: xxxxxx }
     // third is an oninit callback, if you want to prepare 
     this.videoEncoder.init(config, null, null, this.getFrame);
+    this.getFrame();
     this.startTime = performance.now();
   }
 

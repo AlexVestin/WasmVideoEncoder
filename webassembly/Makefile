@@ -14,14 +14,13 @@ ENCODE_FUNCTIONS = "[ \
 		'_open_video', '_close_stream', '_free_buffer', '_write_header']"
 
 ENCODE_COMMON = \
-	-Oz --memory-init-file 0 \
-	-o  WasmEncoder1d.js\
+	-o WasmEncoder1t.js\
 	-s WASM=1 \
-	-s ALLOW_MEMORY_GROWTH=1 \
 	-s EXPORTED_FUNCTIONS=$(ENCODE_FUNCTIONS) \
-	-s MODULARIZE=1 \
-	-s EXPORT_NAME="'WasmEncoder1d'" \
-	-s NO_FILESYSTEM=1 \
+	-s USE_PTHREADS=1 \
+	-s ASSERTIONS=1 \
+	-s TOTAL_MEMORY=1073741824 \
+
 
 DECODE_BC = ffmpeg_prod_demux.bc
 DECODE_FUNCTIONS ="['_init_muxer', '_get_next_frame', '_set_frame', '_close_muxer']"
@@ -36,7 +35,6 @@ DECODE_COMMON = \
 	-s MODULARIZE=1 \
 	-s EXPORT_NAME="'Demuxer'" \
 	-s ASSERTIONS=2
-
 
 demux.js:
 	emcc  $(DECODE_FILES) $(DECODE_COMMON) $(DECODE_BC) $(ENCODE_DEPS) 

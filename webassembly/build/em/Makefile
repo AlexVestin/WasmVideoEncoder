@@ -35,7 +35,6 @@ libx264:
 		--disable-cli \
 		--enable-shared \
 		--disable-opencl \
-		--disable-thread \
 		--disable-asm \
 		\
 		--disable-avs \
@@ -56,7 +55,6 @@ FFMPEG_COMMON_ARGS = \
 	--disable-runtime-cpudetect \
 	--disable-asm \
 	--disable-fast-unaligned \
-	--disable-pthreads \
 	--disable-w32threads \
 	--disable-os2threads \
 	--disable-debug \
@@ -65,6 +63,7 @@ FFMPEG_COMMON_ARGS = \
 	--disable-all \
 	--enable-ffmpeg \
 	--enable-avcodec \
+	--enable-pthreads \
 	--enable-avformat \
 	--enable-avutil \
 	--enable-swresample \

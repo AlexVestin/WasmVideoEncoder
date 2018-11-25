@@ -1,7 +1,6 @@
-importScripts("WasmEncoder1c.js")
-
 let Module = {}
-WasmEncoder1c(Module)
+console.log(window)
+window.WasmEncoder1t(Module)
 
 let useAudio = false
 
