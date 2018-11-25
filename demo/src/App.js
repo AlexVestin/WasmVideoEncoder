@@ -69,7 +69,7 @@ class App extends Component {
       // queue in videoencoder
       this.videoEncoder.queueFrame({type: "video", pixels: this.pixels});
       this.frames++;
-      if(this.frames % 15 === 0)
+      if(this.frames % 60 === 0)
         this.setState({frames: this.frames});
     }else {
       this.videoEncoder.close(this.saveToFile);
@@ -79,6 +79,8 @@ class App extends Component {
     }
   }
   saveToFile = (vid) => {
+    const s = (performance.now() - this.startTime) / 1000
+    console.log(s + "s and " +  this.duration / s * this.fps + "fps" );
     FileSaver.saveAs(new Blob([vid], { type: 'video/mp4' }), "vid.mp4")
   }
 
@@ -94,6 +96,7 @@ class App extends Component {
     // second parameter is audioConfig which looks like audioConfig: { birate: xxxxx, sampleRate: xxxxxx }
     // third is an oninit callback, if you want to prepare 
     this.videoEncoder.init(config, null, null, this.getFrame);
+    this.startTime = performance.now();
   }
 
   render() {
