@@ -46,3 +46,14 @@ make
 cd ../..
 make encode.js
 ```
+
+# Benchmarks
+
+| settings | Chrome | FireFox |
+| --- | --- | --- |
+| 60s 640x480 2000k Ultrafast | 48.1s, 74.9fps, 12.8MB | 0 |
+| 60s 640x480 2000k Fast | 148.6s, 24fps, 9.1MB  | 0 |
+| 60s 640x480 2000k Medium | 123.8s, 29fps, 8.9MB  | 0 |
+| 60s 1280x720 6000k Ultrafast | 121.5s, 29.6fps, 23MB  | 0 |
+rest tbd.
+
