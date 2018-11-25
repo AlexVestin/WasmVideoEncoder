@@ -218,13 +218,13 @@ void write_header() {
 }
 
 void open_video(int w, int h, int fps, int br, int preset_idx, int codec_idx, int format_idx){
-
     const char* formats[] = {"webm",  "mp4", "mp3", "aac", "ogg" };
     const char* codecs[] = { "libvpx", "libx264" };
     AVOutputFormat* of = av_guess_format(formats[format_idx], 0, 0);
     bd.ptr  = bd.buf = av_malloc(bd_buf_size);
 
     if (!bd.buf) {
+        printf("BUF ERROR\n");
         ret = AVERROR(ENOMEM);
     }
     bd.size = bd.room = bd_buf_size;
@@ -239,16 +239,15 @@ void open_video(int w, int h, int fps, int br, int preset_idx, int codec_idx, in
         ret = AVERROR(ENOMEM);
         exit(1);
     }
-
     ret = avformat_alloc_output_context2(&ofmt_ctx, of, NULL, NULL);
     if (ret < 0) {
-        //printf(stderr, "Could not create output context\n");
+        printf(stderr, "Could not create output context\n");
         exit(1);
     }
     
     AVCodec* video_codec = avcodec_find_encoder_by_name(codecs[codec_idx]);
     if (!video_codec) {
-        //printf(stderr, "Codec '%s' not found\n", codec_name);
+        printf(stderr, "Codec '%s' not found\n", codec_name);
         exit(1);
     }
    
@@ -262,12 +261,12 @@ void open_video(int w, int h, int fps, int br, int preset_idx, int codec_idx, in
     video_ctx->gop_size = 10;
     video_ctx->max_b_frames = 1;
     video_ctx->pix_fmt = AV_PIX_FMT_YUV420P;
+    video_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
     const char *presets[] = { "ultrafast", "veryfast", "fast", "medium", "slow", "veryslow" };
-
     av_opt_set(video_ctx->priv_data, "preset", presets[preset_idx], 0);
     if(avcodec_open2(video_ctx, video_codec, NULL) < 0) {
-        //printf("couldnt open codec\n");
+        printf("couldnt open codec\n");
         exit(1);
     }
 
@@ -280,13 +279,13 @@ void open_video(int w, int h, int fps, int br, int preset_idx, int codec_idx, in
 
     pkt = av_packet_alloc();
     if(!pkt){
-        //printf("errror packer\n");
+        printf("errror packer\n");
         exit(1);
     }
         
     video_stream = avformat_new_stream(ofmt_ctx, NULL);  
     if(!video_stream){
-        //printf(stderr, "error making stream\n");
+        printf(stderr, "error making stream\n");
         exit(1);
     }
     
@@ -424,6 +423,10 @@ void add_audio_frame(float* left, float* right, int size) {
         memcpy(audio_buffer_right, audio_buffer_right + audio_frame->nb_samples, audio_buffer_size*sizeof(float));
         audio_buffer_size -= audio_frame->nb_samples;
     }
+}
+
+void test(){
+    printf("TESTED\n");
 }
 
 void open_audio(int sample_rate, int nr_channels, int bit_rate, int codec_idx) {
