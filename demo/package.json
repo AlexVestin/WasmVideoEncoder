@@ -1,16 +1,28 @@
 {
   "name": "demo",
-  "version": "1.0.0",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@material-ui/core": "^3.5.1",
+    "file-saver": "^2.0.0",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3",
+    "react-scripts": "2.1.1",
+    "three": "^0.98.0"
+  },
   "scripts": {
-    "start": "webpack-dev-server --mode development --port=5000",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
-  "devDependencies": {
-    "babel-core": "^6.17.0",
-    "babel-loader": "^6.2.5",
-    "babel-preset-env": "^1.7.0",
-    "webpack": "^1.13.2",
-    "webpack-dev-server": "^1.16.2"
+  "eslintConfig": {
+    "extends": "react-app"
   },
-  "license": "MIT"
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
 }
