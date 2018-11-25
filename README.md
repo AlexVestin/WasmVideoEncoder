@@ -49,9 +49,11 @@ make encode.js
 
 # Benchmarks
 Take these with a grain of salt, mostly for comparison with later versions with threads/SIMD
+
 Firefox 63.0.3
+
 Chrome 70.0
-11/25/2018
+
 
 | settings | Chrome | FireFox |
 | --- | --- | --- |
