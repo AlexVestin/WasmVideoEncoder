@@ -88,7 +88,7 @@ class SimpleModal extends React.Component {
         return (
                 <div style={style} className={classes.paper}>
 
-                    <div style={{display: "flex", flexDirection: "row", marginTop: 50}}>
+                    <div style={{display: "flex", flexDirection: "row"}}>
                         <Options onchange={format => this.format = format} name="format" labels={["mp4"]} disabled></Options>
                         <Options onchange={v => this.res = v} name="resolution" labels={["640x480", "1280x720", "1920x1080"]}></Options>
                         <Options onchange={v => this.fps = v} name="fps" labels={["60"]} disabled></Options>
@@ -105,11 +105,6 @@ class SimpleModal extends React.Component {
                             />
 
                         </div>
-                    </div>
-
-                    <div style={{display: "flex", flexDirection: "row"}}>
-                        <Options onchange={f => this.audioEncoding = f} name="Audio format" labels={["mp3"]} disabled></Options>
-                        <Options onchange={f => this.bitrate = f} name="Audio bitrate" labels={["320000"]} disabled></Options>
                     </div>
 
                     <Button 

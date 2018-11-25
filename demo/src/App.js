@@ -57,7 +57,7 @@ class App extends Component {
   }
 
   getFrame = () => {
-    if(this.state.frames < this.duration * this.fps) {
+    if(this.frames < this.duration * this.fps) {
       // animate the scene
       this.animate();
     
@@ -68,7 +68,9 @@ class App extends Component {
 
       // queue in videoencoder
       this.videoEncoder.queueFrame({type: "video", pixels: this.pixels});
-      this.setState({frames: this.state.frames + 1});
+      this.frames++;
+      if(this.frames % 15 === 0)
+        this.setState({frames: this.frames});
     }else {
       this.videoEncoder.close(this.saveToFile);
       this.renderer.setSize(640, 480);
@@ -85,6 +87,7 @@ class App extends Component {
     this.duration = config.duration;
     this.fps = config.fps;
     this.width = config.width;
+    this.frames = 0;
     this.height = config.height;
     this.renderer.setSize(config.width, config.height);
     this.setState({encoding: true});
@@ -97,7 +100,8 @@ class App extends Component {
     const { encoderLoaded, encoding } = this.state;
     return (
       <div className="container">
-        <div style={{marginTop: 20}} ref={this.canvasMountRef}></div>
+        <div style={{marginTop: 20, display: this.state.encoding ? "none" : ""}} ref={this.canvasMountRef}></div>
+        {this.state.encoding && <React.Fragment>{this.state.frames} / {this.duration * this.fps} frames encoded</React.Fragment>}
         <ButtonGroup disabled={!encoderLoaded && encoding} startEncoding={this.startEncoding}></ButtonGroup>
       </div>
     );
