@@ -15,12 +15,12 @@ ENCODE_FUNCTIONS = "[ \
 
 ENCODE_COMMON = \
 	-Oz --memory-init-file 0 \
-	-o  WasmEncoder1c.js\
+	-o  WasmEncoder1d.js\
 	-s WASM=1 \
 	-s ALLOW_MEMORY_GROWTH=1 \
 	-s EXPORTED_FUNCTIONS=$(ENCODE_FUNCTIONS) \
 	-s MODULARIZE=1 \
-	-s EXPORT_NAME="'WasmEncoder1c'" \
+	-s EXPORT_NAME="'WasmEncoder1d'" \
 	-s NO_FILESYSTEM=1 \
 
 DECODE_BC = ffmpeg_prod_demux.bc

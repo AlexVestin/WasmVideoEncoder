@@ -261,10 +261,12 @@ void open_video(int w, int h, int fps, int br, int preset_idx, int codec_idx, in
     video_ctx->gop_size = 10;
     video_ctx->max_b_frames = 1;
     video_ctx->pix_fmt = AV_PIX_FMT_YUV420P;
-    video_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+    //video_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
     const char *presets[] = { "ultrafast", "veryfast", "fast", "medium", "slow", "veryslow" };
+    
     av_opt_set(video_ctx->priv_data, "preset", presets[preset_idx], 0);
+    
     if(avcodec_open2(video_ctx, video_codec, NULL) < 0) {
         printf("couldnt open codec\n");
         exit(1);
