@@ -14,13 +14,14 @@ ENCODE_FUNCTIONS = "[ \
 		'_open_video', '_close_stream', '_free_buffer', '_write_header']"
 
 ENCODE_COMMON = \
+	-O3 \
 	-o WasmEncoder1t.js\
-	-Oz \
-	-s WASM=1 \
 	-s EXPORTED_FUNCTIONS=$(ENCODE_FUNCTIONS) \
 	-s USE_PTHREADS=1 \
-	-s ASSERTIONS=1 \
+	-s PTHREAD_POOL_SIZE=4 \
+	-s ASSERTIONS=0 \
 	-s TOTAL_MEMORY=1073741824 \
+	-s NO_FILESYSTEM=1
 
 
 DECODE_BC = ffmpeg_prod_demux.bc
