@@ -15,6 +15,7 @@ ENCODE_FUNCTIONS = "[ \
 
 ENCODE_COMMON = \
 	-o WasmEncoder1t.js\
+	-Oz \
 	-s WASM=1 \
 	-s EXPORTED_FUNCTIONS=$(ENCODE_FUNCTIONS) \
 	-s USE_PTHREADS=1 \
