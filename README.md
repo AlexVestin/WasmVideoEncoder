@@ -54,7 +54,7 @@ Chrome 70.0
 
 
 | settings | Chrome | Firefox | Firefox nightly (threaded) |
-| --- | --- | --- |
+| --- | --- | --- | --- |
 | 60s 640x480 2000k Ultrafast | 48.1s, 74.9fps, 12.8MB | 35.5s, 101.5fps, 11.8MB | 33.7s, 106.8fps, 11.8MB |
 | 60s 640x480 2000k Fast | 148.6s, 24fps, 9.1MB  | 143.8s, 25fps, 7.9MB | 109.7s, 32.8fps, 7.9MB |
 | 60s 640x480 2000k Medium | 123.8s, 29fps, 8.9MB  | 106.1s, 33.9fps, 7.7MB | 89.2s, 40.3fps, 7.9MB |
