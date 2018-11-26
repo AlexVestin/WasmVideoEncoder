@@ -9,48 +9,6 @@ FFMPEG_PC_PATH = ../../reg/lib/pkgconfig
 
 all: ffmpeg
 
-build/opus/configure:
-	cd ../dependencies/opus && ./autogen.sh
-
-libopus: build/opus/configure
-	cd ../dependencies/opus && \
-	git reset --hard && \
-	./configure \
-		CFLAGS=-O3 \
-		--prefix="$$(pwd)/../../reg" \
-		--disable-static \
-		--disable-doc \
-		--disable-extra-programs \
-		--disable-asm \
-		--disable-rtcd \
-		--disable-intrinsics \
-		&& \
-	make -j8 && \
-	make install
-
-libvpx:
-	cd ../dependencies/libvpx && \
-	git reset --hard && \
-	./configure \
-		--prefix="$$(pwd)/../../reg" \
-		--target=generic-gnu \
-		--disable-dependency-tracking \
-		--disable-multithread \
-		--disable-runtime-cpu-detect \
-		--enable-shared \
-		--disable-static \
-		\
-		--disable-examples \
-		--disable-docs \
-		--disable-unit-tests \
-		--disable-webm-io \
-		--disable-libyuv \
-		--disable-vp8-decoder \
-		--disable-vp9 \
-		&& \
-	make -j8 && \
-	make install
-
 
 libmp3lame:
 	cd ../dependencies/lame && \
@@ -80,7 +38,6 @@ libx264:
 		--disable-opencl \
 		--disable-thread \
 		--disable-asm \
-		\
 		--disable-avs \
 		--disable-swscale \
 		--disable-lavf \
@@ -102,7 +59,6 @@ FFMPEG_COMMON_ARGS = \
 	--disable-os2threads \
 	--disable-debug \
 	--disable-stripping \
-	\
 	--disable-all \
 	--enable-ffmpeg \
 	--enable-avcodec \

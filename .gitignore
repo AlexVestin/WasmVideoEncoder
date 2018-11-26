@@ -12,5 +12,6 @@ webassembly/build/reg/include/
 webassembly/build/reg/share/
 
 webassembly/build/dependencies/
+webassembly/C/assets/
 demo/node_modules/
 demo/build/

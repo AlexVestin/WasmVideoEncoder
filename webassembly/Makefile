@@ -23,22 +23,23 @@ ENCODE_COMMON = \
 	-s TOTAL_MEMORY=1073741824 \
 
 
-DECODE_BC = ffmpeg_prod_demux.bc
-DECODE_FUNCTIONS ="['_init_muxer', '_get_next_frame', '_set_frame', '_close_muxer']"
+DECODE_BC = ffmpeg_d.bc
+DECODE_FUNCTIONS ="['_init_muxer', '_get_next_frame', '_set_frame', '_close_muxer', '_get_next']"
 DECODE_FILES = ./C/avio_read.c
+
 
 DECODE_COMMON = \
 	-O3 --memory-init-file 0 \
-	-o  ../../public/Demux2.js\
+	-o  Demux.js\
 	-s WASM=1 \
 	-s TOTAL_MEMORY=1073741824 \
 	-s EXPORTED_FUNCTIONS=$(DECODE_FUNCTIONS) \
 	-s MODULARIZE=1 \
 	-s EXPORT_NAME="'Demuxer'" \
-	-s ASSERTIONS=2
+	-s ASSERTIONS=1
 
 demux.js:
-	emcc  $(DECODE_FILES) $(DECODE_COMMON) $(DECODE_BC) $(ENCODE_DEPS) 
+	emcc -I./build/em/include $(DECODE_FILES) $(DECODE_COMMON) $(DECODE_BC) 
 
 encode.js:
 	emcc -I./build/em/include $(ENCODE_FILES) $(ENCODE_COMMON) $(ENCODE_BC) $(ENCODE_DEPS) 

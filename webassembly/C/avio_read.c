@@ -29,15 +29,13 @@
  * @example demuxing_decoding.c
  */
 
-#include "bonus.c"
-
 #include <libavutil/imgutils.h>
 #include <libavutil/samplefmt.h>
 #include <libavutil/timestamp.h>
 #include <libavformat/avformat.h>
 
 #include <libswscale/swscale.h>
-
+#include <inttypes.h>
 //audio
 #include <libavutil/opt.h>
 #include <libavutil/channel_layout.h>
@@ -141,7 +139,6 @@ static int decode_audio(uint8_t** left, uint8_t** right, int* frame_size) {
             exit(0);
         }
 
-
         if(!swr_ctx) {
             src_nb_channels =audio_dec_ctx->channels;
             src_rate = audio_dec_ctx->sample_rate;
@@ -182,7 +179,6 @@ static int decode_audio(uint8_t** left, uint8_t** right, int* frame_size) {
                 printf("couldnt alloc dest samples: %s \n", av_err2str(ret));
                 exit(1);
             }
-
         }
         
         dst_nb_samples = av_rescale_rnd(swr_get_delay(swr_ctx, src_rate) +src_nb_samples, dst_rate, src_rate, AV_ROUND_UP);
@@ -218,6 +214,8 @@ static int decode_audio(uint8_t** left, uint8_t** right, int* frame_size) {
         *left = tmp_left;
         *right = tmp_right;
     }
+
+    return decoded;
 }
 
 
@@ -281,7 +279,7 @@ static int decode_packet(uint8_t** data, int* frame_size)
                 return -1;
             }
 
-            printf("video_frame n:%d coded_n:%d\n", video_frame_count++, frame->coded_picture_number);
+            //printf("video_frame n:%d coded_n:%d\n", video_frame_count++, frame->coded_picture_number);
 
 
 
@@ -426,6 +424,42 @@ int set_frame(int t) {
     return 0;
 }
 
+
+int get_next(uint8_t* lb, uint8_t* rb, uint8_t* img, int* size, int* type) {
+    int ret = 0, idummy, s = 0;
+
+    ret = av_read_frame(fmt_ctx, &pkt);
+    if(ret < 0) {
+        printf("ERRROR READING PACKET (or at the end of the file).\n");
+        return -1;
+    }
+
+    *type = pkt.stream_index;
+    if(pkt.stream_index == video_stream_idx) {
+        do {
+            ret = decode_packet(&img, &idummy);
+            if (ret < 0)
+                break;
+
+            s += ret;
+            pkt.data += ret;
+            pkt.size -= ret;
+        } while (pkt.size > 0);
+
+        *size = video_dec_ctx->width * video_dec_ctx->height *3;
+    }else if(pkt.stream_index == audio_stream_idx) {
+        int s;
+        ret = decode_audio(&lb, &rb, &s);
+        if(ret < 0)
+            return -1;
+        *size = s;
+    }
+
+    return 1;
+}   
+
+
+
 uint8_t* get_next_frame(int* size) {
     int ret = 0, idummy;
     do {
@@ -491,7 +525,7 @@ int init_muxer(uint8_t* data, int size, int* video_info) {
         exit(1);
     }
 
-    av_dump_format(fmt_ctx, 0, "dfgh", 0);
+    av_dump_format(fmt_ctx, 0, "stream 0", 0);
     /* retrieve stream information */
     if (avformat_find_stream_info(fmt_ctx, NULL) < 0) {
         fprintf(stderr, "Could not find stream information\n");
@@ -542,15 +576,16 @@ int init_muxer(uint8_t* data, int size, int* video_info) {
 
     video_info[0] = video_dec_ctx->framerate.num;
     video_info[1] = video_dec_ctx->framerate.den;
-    
     video_info[2] = video_dec_ctx->width;
     video_info[3] = video_dec_ctx->height;
     video_info[4] = video_dec_ctx->pix_fmt;
     video_info[5] = video_dec_ctx->bit_rate;
-} 
+}
 
 
-uint8_t* extract_audio(int *out_size, int* bitrate) {
+
+
+uint8_t* extract_audio(int *out_size, int* samplerate) {
     if(!audio_stream) {
         *out_size = -1;
         return -1;
@@ -560,8 +595,8 @@ uint8_t* extract_audio(int *out_size, int* bitrate) {
         printf("could not set audio frame to 0\n");
         exit(1);
     }
-    uint8_t * left_sound_buf = NULL;
-    uint8_t * right_sound_buf = NULL;
+    uint8_t* left_sound_buf = NULL;
+    uint8_t* right_sound_buf = NULL;
 
     int size = 0, total_size = 0;
     while(1) {
@@ -598,7 +633,7 @@ uint8_t* extract_audio(int *out_size, int* bitrate) {
 
     }
 
-    *bitrate = dst_rate;
+    *samplerate = dst_rate;
     *out_size = total_size;
     return left_sound_buf;
 }
