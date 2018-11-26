@@ -116,7 +116,7 @@ Chrome 70.0
 | 60s 1280x720 6000k Ultrafast | 121.5s, 29.6fps, 23MB  | 90.3s, 39.8fps, 21.2MB | 89.1s, 40.4fps, 21.2MB |
 | 30s 1280x720 6000k Fast | 203.2s, 8.6fps, 7.8MB   | 202.2s, 8.9fps, 6.6MB | 150.6s, 12.0fps, 6.7MB |
 | 30s 1280x720 6000k Medium | 157s, 11.5fps, 7.4MB | 141.5s, 12.7fps, 6.4MB | 117.8s, 15.3fps, 6.5MB |
-| 30s 1920x1080 6000k Medium | 336.2s, 5.4fps, 11MB  | 303s,  5.9fps, 9.4MB | - |
-| 20s 1920x1080 12000k Ultrafast | 87.7s, 13.7fps, 11.7MB | 64.5s, 18.6fps, 10.7MB | - |
+| 30s 1920x1080 6000k Medium | 336.2s, 5.4fps, 11MB  | 303s,  5.9fps, 9.4MB | 255.2s, 7.1fps, 9.5MB |
+| 20s 1920x1080 12000k Ultrafast | 87.7s, 13.7fps, 11.7MB | 64.5s, 18.6fps, 10.7MB | 63.1s, 19.0fps, 10.6MB |
 | 20s 1920x1080 12000k Fast | 298.9, 4fps, 7.4MB  | 300.7s, 4fps, 6.5MB | 218.6s, 5.5fps, 6.5MB |
 
