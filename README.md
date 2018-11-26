@@ -53,14 +53,14 @@ Firefox 63.0.3
 Chrome 70.0  
 
 
-| settings | Chrome | FireFox |
-| --- | --- | --- |
-| 60s 640x480 2000k Ultrafast | 48.1s, 74.9fps, 12.8MB | 35.5s, 101.5fps, 11.8MB |
-| 60s 640x480 2000k Fast | 148.6s, 24fps, 9.1MB  | 143.8s, 25fps, 7.9MB |
-| 60s 640x480 2000k Medium | 123.8s, 29fps, 8.9MB  | 106.1s, 33.9fps, 7.7MB |
-| 60s 1280x720 6000k Ultrafast | 121.5s, 29.6fps, 23MB  | 90.3s, 39.8fps, 21.2MB |
-| 30s 1280x720 6000k Fast | 203.2s, 8.6fps, 7.8MB   | 202.2s, 8.9fps, 6.6MB |
-| 30s 1280x720 6000k Medium | 157s, 11.5fps, 7.4MB | 141.5s, 12.7fps, 6.4MB |
-| 30s 1920x1080 6000k Medium | 336.2s, 5.4fps, 11MB  | 303s,  5.9fps, 9.4MB |
-| 20s 1920x1080 12000k Ultrafast | 87.7s, 13.7fps, 11.7MB | 64.5s, 18.6fps, 10.7MB |
-| 20s 1920x1080 12000k Fast | 298.9, 4fps, 7.4MB  | 300.7s, 4fps, 6.5MB |
+| settings | Chrome | Firefox | Firefox nightly (threaded) |
+| --- | --- | --- | --- |
+| 60s 640x480 2000k Ultrafast | 48.1s, 74.9fps, 12.8MB | 35.5s, 101.5fps, 11.8MB | 33.7s, 106.8fps, 11.8MB |
+| 60s 640x480 2000k Fast | 148.6s, 24fps, 9.1MB  | 143.8s, 25fps, 7.9MB | 109.7s, 32.8fps, 7.9MB |
+| 60s 640x480 2000k Medium | 123.8s, 29fps, 8.9MB  | 106.1s, 33.9fps, 7.7MB | 89.2s, 40.3fps, 7.9MB |
+| 60s 1280x720 6000k Ultrafast | 121.5s, 29.6fps, 23MB  | 90.3s, 39.8fps, 21.2MB | 89.1s, 40.4fps, 21.2MB |
+| 30s 1280x720 6000k Fast | 203.2s, 8.6fps, 7.8MB   | 202.2s, 8.9fps, 6.6MB | 150.6s, 12.0fps, 6.7MB |
+| 30s 1280x720 6000k Medium | 157s, 11.5fps, 7.4MB | 141.5s, 12.7fps, 6.4MB | 117.8s, 15.3fps, 6.5MB |
+| 30s 1920x1080 6000k Medium | 336.2s, 5.4fps, 11MB  | 303s,  5.9fps, 9.4MB | - |
+| 20s 1920x1080 12000k Ultrafast | 87.7s, 13.7fps, 11.7MB | 64.5s, 18.6fps, 10.7MB | - |
+| 20s 1920x1080 12000k Fast | 298.9, 4fps, 7.4MB  | 300.7s, 4fps, 6.5MB | - |
