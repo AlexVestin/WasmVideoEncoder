@@ -223,89 +223,81 @@ static int decode_packet(uint8_t** data, int* frame_size)
 {
     int ret = 0, dec_ret = 0;
     int decoded = pkt.size;
+    /* decode video frame */
+    dec_ret = avcodec_send_packet(video_dec_ctx, &pkt);
+    if (dec_ret < 0) {
+        fprintf(stderr, "Error decoding video frame (%s)\n", av_err2str(ret));
+        return dec_ret;
+    }
 
-
-    if (pkt.stream_index == video_stream_idx) {
-        /* decode video frame */
-        dec_ret = avcodec_send_packet(video_dec_ctx, &pkt);
-        if (dec_ret < 0) {
-            fprintf(stderr, "Error decoding video frame (%s)\n", av_err2str(ret));
-            return dec_ret;
+    while(dec_ret >= 0) {
+        dec_ret = avcodec_receive_frame(video_dec_ctx, frame);            
+        if(dec_ret == AVERROR(EAGAIN) || dec_ret == AVERROR_EOF) {
+            return decoded;
+        }
+        else if (dec_ret < 0) {
+            printf("Error in video decoding \n");
+            exit(0);
         }
 
-        while(dec_ret >= 0) {
-            dec_ret = avcodec_receive_frame(video_dec_ctx, frame);            
-            if(dec_ret == AVERROR(EAGAIN) || dec_ret == AVERROR_EOF) {
-                return decoded;
+        if(!image_inited && frame->format != -1) {
+            video_dec_ctx->pix_fmt = frame->format;
+            pix_fmt = frame->format;
+            //ret = av_image_alloc(video_dst_data, video_dst_linesize,width, height, pix_fmt, 1);
+            if (ret < 0) {
+                fprintf(stderr, "Could not allocate raw video buffer\n");
+                exit(1);
             }
-            else if (dec_ret < 0) {
-                printf("Error in video decoding \n");
-                exit(0);
-            }
-
-            if(!image_inited && frame->format != -1) {
-                video_dec_ctx->pix_fmt = frame->format;
-                pix_fmt = frame->format;
-                //ret = av_image_alloc(video_dst_data, video_dst_linesize,width, height, pix_fmt, 1);
-                if (ret < 0) {
-                    fprintf(stderr, "Could not allocate raw video buffer\n");
-                    exit(1);
-                }
-                video_dst_bufsize = ret;
-                image_inited = 1;
-                time_base = ((int)(video_dec_ctx->framerate.den) *AV_TIME_BASE) / ( int)(video_dec_ctx->framerate.den);
-                
-                sws_context = sws_getCachedContext(
-                    sws_context,
-                    video_dec_ctx->width, video_dec_ctx->height, 
-                    pix_fmt,
-                    video_dec_ctx->width, video_dec_ctx->height, 
-                    AV_PIX_FMT_RGB24,
-                    0, NULL, NULL, NULL
-                );
-            }
-           
-            if (frame->width != width || frame->height != height || frame->format != pix_fmt) {
-                /* To handle this change, one could call av_image_alloc again and
-                 * decode the following frames into another rawvideo file. */
-                fprintf(stderr, "Error: Width, height and pixel format have to be "
-                        "constant in a rawvideo file, but the width, height or "
-                        "pixel format of the input video changed:\n"
-                        "old: width = %d, height = %d, format = %s\n"
-                        "new: width = %d, height = %d, format = %s\n",
-                        width, height, av_get_pix_fmt_name(pix_fmt),
-                        frame->width, frame->height,
-                        av_get_pix_fmt_name(frame->format));
-                return -1;
-            }
-
-            //printf("video_frame n:%d coded_n:%d\n", video_frame_count++, frame->coded_picture_number);
-
-
-
-            /* copy decoded frame to destination buffer:
-             * this is required since rawvideo expects non aligned data */
-            //av_image_copy(video_dst_data, video_dst_linesize,(const uint8_t **)(frame->data), frame->linesize,pix_fmt, width, height);
-            const int size = video_dec_ctx->width*video_dec_ctx->height*3;
-            uint8_t* buffer = malloc(size);
-
-            const int out_linesize[1] = { 3 * video_dec_ctx->width };
-            sws_scale(
-                sws_context, 
-                frame->data, 
-                frame->linesize, 
-                0, 
-                video_dec_ctx->height, 
-                (const uint8_t * const *)&buffer, 
-                out_linesize
+            video_dst_bufsize = ret;
+            image_inited = 1;
+            time_base = ((int)(video_dec_ctx->framerate.den) *AV_TIME_BASE) / ( int)(video_dec_ctx->framerate.den);
+            
+            sws_context = sws_getCachedContext(
+                sws_context,
+                video_dec_ctx->width, video_dec_ctx->height, 
+                pix_fmt,
+                video_dec_ctx->width, video_dec_ctx->height, 
+                AV_PIX_FMT_RGB24,
+                0, NULL, NULL, NULL
             );
-        
-            *data = buffer;
-            decoded =  size;
-            //fwrite(*data, 1, decoded, video_dst_file);
-            //fwrite(video_dst_data[0], 1, video_dst_bufsize, video_dst_file);
         }
-    } 
+        
+        if (frame->width != width || frame->height != height || frame->format != pix_fmt) {
+            /* To handle this change, one could call av_image_alloc again and
+                * decode the following frames into another rawvideo file. */
+            fprintf(stderr, "Error: Width, height and pixel format have to be "
+                    "constant in a rawvideo file, but the width, height or "
+                    "pixel format of the input video changed:\n"
+                    "old: width = %d, height = %d, format = %s\n"
+                    "new: width = %d, height = %d, format = %s\n",
+                    width, height, av_get_pix_fmt_name(pix_fmt),
+                    frame->width, frame->height,
+                    av_get_pix_fmt_name(frame->format));
+            return -1;
+        }
+
+        /* copy decoded frame to destination buffer:
+            * this is required since rawvideo expects non aligned data */
+        //av_image_copy(video_dst_data, video_dst_linesize,(const uint8_t **)(frame->data), frame->linesize,pix_fmt, width, height);
+        const int size = video_dec_ctx->width*video_dec_ctx->height*3;
+        uint8_t* buffer = malloc(size);
+        
+        const int out_linesize[1] = { 3 * video_dec_ctx->width };
+        sws_scale(
+            sws_context, 
+            frame->data, 
+            frame->linesize, 
+            0, 
+            video_dec_ctx->height, 
+            (const uint8_t * const *)&buffer, 
+            out_linesize
+        );
+
+        av_frame_unref(frame);
+        *data = buffer;
+        decoded =  size;
+    }
+    
 
     return decoded;
 }
@@ -427,6 +419,7 @@ int set_frame(int t) {
 
 int get_next(uint8_t* lb, uint8_t* rb, uint8_t* img, int* size, int* type) {
     int ret = 0, idummy, s = 0;
+    frame = av_frame_alloc();
 
     ret = av_read_frame(fmt_ctx, &pkt);
     if(ret < 0) {
@@ -435,30 +428,19 @@ int get_next(uint8_t* lb, uint8_t* rb, uint8_t* img, int* size, int* type) {
     }
 
     *type = pkt.stream_index;
+    AVPacket orig_pkt = pkt;
     if(pkt.stream_index == video_stream_idx) {
-        do {
-            ret = decode_packet(&img, &idummy);
-            if (ret < 0)
-                break;
-
-            s += ret;
-            pkt.data += ret;
-            pkt.size -= ret;
-        } while (pkt.size > 0);
-
+        ret = decode_packet(&img, &idummy);
         *size = video_dec_ctx->width * video_dec_ctx->height *3;
     }else if(pkt.stream_index == audio_stream_idx) {
-        int s;
         ret = decode_audio(&lb, &rb, &s);
-        if(ret < 0)
-            return -1;
         *size = s;
     }
 
-    return 1;
+    av_packet_unref(&orig_pkt);
+    av_frame_free(frame);
+    return ret;
 }   
-
-
 
 uint8_t* get_next_frame(int* size) {
     int ret = 0, idummy;

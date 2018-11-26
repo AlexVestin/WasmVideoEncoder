@@ -30,8 +30,9 @@ export default class Video {
             const item = this.decoder.get_next();
             if(item === "done") {
                 this.done = true;
+                return;
            }
-           console.log(performance.now() - t0, item);
+           console.log(performance.now() - t0);
         }
     }
 
