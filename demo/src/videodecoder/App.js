@@ -26,10 +26,12 @@ class App extends Component {
   }
 
   animate = (event) => {
+    console.log("-------------------------");
     if(this.videoLoaded) {
       this.video.update();
     }
     this.renderer.render(this.scene, this.camera);
+    
     requestAnimationFrame(this.animate);
   }
 
