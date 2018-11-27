@@ -32,7 +32,7 @@ DECODE_COMMON = \
 	-O3 --memory-init-file 0 \
 	-o  Demux.js\
 	-s WASM=1 \
-	-s TOTAL_MEMORY=1073741824 \
+	-s ALLOW_MEMORY_GROWTH=1 \
 	-s EXPORTED_FUNCTIONS=$(DECODE_FUNCTIONS) \
 	-s MODULARIZE=1 \
 	-s EXPORT_NAME="'Demuxer'" \

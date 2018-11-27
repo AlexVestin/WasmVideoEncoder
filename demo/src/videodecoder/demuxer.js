@@ -12,7 +12,6 @@ export default class VideoDecoder {
     }
 
     init = (data) => {
-        console.log(data.length);
         var buffer_p = this.Module._malloc(data.length);
         var video_info_p = this.Module._malloc(4 * 7);
         this.Module.HEAPU8.set(data, buffer_p);
