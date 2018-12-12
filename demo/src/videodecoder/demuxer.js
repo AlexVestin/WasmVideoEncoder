@@ -4,7 +4,7 @@
 export default class VideoDecoder {
     constructor(onload) {
         this.onload = onload;
-        this.Module = window.Demuxer();
+        this.Module = window.Demuxer8();
         this.Module["onRuntimeInitialized"] = () => { 
             this.onload();
         };
@@ -32,15 +32,19 @@ export default class VideoDecoder {
         }
         const bufferSize = this.Module.HEAP32[sizeBuf >> 2];
         const bufferType = this.Module.HEAP32[typeBuf >> 2];
+
+        const imgBufPointer = this.Module.HEAP32[imgBuf >> 2];
+        const audioLeftBufPointer = this.Module.HEAP32[audioLeftBuf >> 2];
+        const audioRightBufPointer = this.Module.HEAP32[audioRightBuf >> 2];
         if(bufferType === 1) {
-            const leftAudio = new Uint8Array(this.Module.HEAPU8.subarray(audioLeftBuf, audioLeftBuf + bufferSize));
-            const rightAudio = new Uint8Array(this.Module.HEAPU8.subarray(audioRightBuf, audioRightBuf + bufferSize));
-            this.Module._free(audioLeftBuf);
-            this.Module._free(audioRightBuf);
+            const leftAudio = new Uint8Array(this.Module.HEAPU8.subarray(audioLeftBufPointer, audioLeftBufPointer + bufferSize));
+            const rightAudio = new Uint8Array(this.Module.HEAPU8.subarray(audioRightBufPointer, audioRightBufPointer + bufferSize));
+            this.Module._free(audioLeftBufPointer);
+            this.Module._free(audioRightBufPointer);
             return {type: "audio", left: leftAudio, right: rightAudio };
         }else {
-            const img = new Uint8Array(this.Module.HEAPU8.subarray(imgBuf, imgBuf + bufferSize));
-            this.Module._free(imgBuf);
+            const img = new Uint8Array(this.Module.HEAPU8.subarray(imgBufPointer, imgBufPointer + bufferSize));
+            this.Module._free(imgBufPointer);
             return {type: "image", img: img };
         }
     }

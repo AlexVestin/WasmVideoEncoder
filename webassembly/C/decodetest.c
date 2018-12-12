@@ -7,7 +7,7 @@
 
 int main(int argc, char** argv) {    
 
-    FILE* f = fopen("./assets/big.mp4", "rb");
+    FILE* f = fopen("./assets/big2.mp4", "rb");
     fseek(f, 0, SEEK_END);
     int size = ftell(f);
     fseek(f, 0, SEEK_SET);
@@ -19,11 +19,26 @@ int main(int argc, char** argv) {
 
 
     int frame_size = 0, type = 0;
-    uint8_t* left, right, img;
-    int ret = get_next(left, right, img, &frame_size, &type);
+   
+   int ret = 1;
     while(ret > 0) {
-        ret = get_next(left, right, img, &frame_size, &type);
-        //printf("ret: %d, size: %d, type: %d\n", ret, size, type);
+        uint8_t* left;
+        uint8_t* right;
+        uint8_t* img;
+        ret = get_next(&left, &right, &img, &frame_size, &type);
+
+        if(ret == -11) {
+            ret = 1;
+        }else {
+             if(type == 0) {
+                free(img);
+            }else {
+                free(left);
+                free(right);
+            }
+        }
+
+        printf("vczxcxcsf\n");
     }
 
     close_muxer();
