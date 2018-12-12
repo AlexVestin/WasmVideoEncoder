@@ -23,19 +23,19 @@ ENCODE_COMMON = \
 	-s TOTAL_MEMORY=1073741824 \
 
 
-DECODE_BC = ffmpeg_d.bc
+DECODE_BC = ffmpeg_dec.bc
 DECODE_FUNCTIONS ="['_init_muxer', '_get_next_frame', '_set_frame', '_close_muxer', '_get_next']"
 DECODE_FILES = ./C/avio_read.c
 
 
 DECODE_COMMON = \
 	-O3 --memory-init-file 0 \
-	-o  Demux.js\
+	-o  Demux8.js\
 	-s WASM=1 \
 	-s ALLOW_MEMORY_GROWTH=1 \
 	-s EXPORTED_FUNCTIONS=$(DECODE_FUNCTIONS) \
 	-s MODULARIZE=1 \
-	-s EXPORT_NAME="'Demuxer'" \
+	-s EXPORT_NAME="'Demuxer8'" \
 	-s ASSERTIONS=1
 
 demux.js:

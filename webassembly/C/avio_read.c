@@ -132,7 +132,7 @@ static int decode_audio(uint8_t** left, uint8_t** right, int* frame_size) {
     while(dec_ret >= 0) {
         dec_ret = avcodec_receive_frame(audio_dec_ctx, frame);            
         if(dec_ret == AVERROR(EAGAIN) || dec_ret == AVERROR_EOF) {
-            return decoded;
+            return -11;
         }
         else if (dec_ret < 0) {
             printf("ERROR IN DECODING \n");
@@ -219,7 +219,7 @@ static int decode_audio(uint8_t** left, uint8_t** right, int* frame_size) {
 }
 
 
-static int decode_packet(uint8_t** data, int* frame_size)
+int decode_packet(uint8_t** data, int* frame_size)
 {
     int ret = 0, dec_ret = 0;
     int decoded = pkt.size;
@@ -230,6 +230,8 @@ static int decode_packet(uint8_t** data, int* frame_size)
         return dec_ret;
     }
 
+    int count = 0;
+
     while(dec_ret >= 0) {
         dec_ret = avcodec_receive_frame(video_dec_ctx, frame);            
         if(dec_ret == AVERROR(EAGAIN) || dec_ret == AVERROR_EOF) {
@@ -239,6 +241,9 @@ static int decode_packet(uint8_t** data, int* frame_size)
             printf("Error in video decoding \n");
             exit(0);
         }
+        count++;
+        if(count > 1)
+            printf("WHHHHHHHHHHHHHHHAT THE FUCK\n");
 
         if(!image_inited && frame->format != -1) {
             video_dec_ctx->pix_fmt = frame->format;
@@ -250,17 +255,18 @@ static int decode_packet(uint8_t** data, int* frame_size)
             }
             video_dst_bufsize = ret;
             image_inited = 1;
-            time_base = ((int)(video_dec_ctx->framerate.den) *AV_TIME_BASE) / ( int)(video_dec_ctx->framerate.den);
-            
-            sws_context = sws_getCachedContext(
-                sws_context,
-                video_dec_ctx->width, video_dec_ctx->height, 
-                pix_fmt,
-                video_dec_ctx->width, video_dec_ctx->height, 
-                AV_PIX_FMT_RGB24,
-                0, NULL, NULL, NULL
-            );
+            time_base = ((int)(video_dec_ctx->framerate.den) *AV_TIME_BASE) / ( int)(video_dec_ctx->framerate.den);   
         }
+
+
+        sws_context = sws_getCachedContext(
+            sws_context,
+            video_dec_ctx->width, video_dec_ctx->height, 
+            pix_fmt,
+            video_dec_ctx->width, video_dec_ctx->height, 
+            AV_PIX_FMT_RGB24,
+            0, NULL, NULL, NULL
+        );
         
         if (frame->width != width || frame->height != height || frame->format != pix_fmt) {
             /* To handle this change, one could call av_image_alloc again and
@@ -280,7 +286,7 @@ static int decode_packet(uint8_t** data, int* frame_size)
             * this is required since rawvideo expects non aligned data */
         //av_image_copy(video_dst_data, video_dst_linesize,(const uint8_t **)(frame->data), frame->linesize,pix_fmt, width, height);
         const int size = video_dec_ctx->width*video_dec_ctx->height*3;
-        uint8_t* buffer = malloc(size);
+        *data = malloc(size);
         
         const int out_linesize[1] = { 3 * video_dec_ctx->width };
         sws_scale(
@@ -289,12 +295,10 @@ static int decode_packet(uint8_t** data, int* frame_size)
             frame->linesize, 
             0, 
             video_dec_ctx->height, 
-            (const uint8_t * const *)&buffer, 
+            (const uint8_t * const *)data, 
             out_linesize
         );
 
-        av_frame_unref(frame);
-        *data = buffer;
         decoded =  size;
     }
     
@@ -417,28 +421,26 @@ int set_frame(int t) {
 }
 
 
-int get_next(uint8_t* lb, uint8_t* rb, uint8_t* img, int* size, int* type) {
+int get_next(uint8_t** lb, uint8_t** rb, uint8_t** img, int* size, int* type) {
     int ret = 0, idummy, s = 0;
-    frame = av_frame_alloc();
-
     ret = av_read_frame(fmt_ctx, &pkt);
     if(ret < 0) {
         printf("ERRROR READING PACKET (or at the end of the file).\n");
         return -1;
     }
 
-    *type = pkt.stream_index;
+    
     AVPacket orig_pkt = pkt;
     if(pkt.stream_index == video_stream_idx) {
-        ret = decode_packet(&img, &idummy);
+        ret = decode_packet(img, &idummy);
         *size = video_dec_ctx->width * video_dec_ctx->height *3;
     }else if(pkt.stream_index == audio_stream_idx) {
-        ret = decode_audio(&lb, &rb, &s);
+        ret = decode_audio(lb, rb, &s);
         *size = s;
     }
-
+    *type = pkt.stream_index;
+    av_frame_unref(frame);
     av_packet_unref(&orig_pkt);
-    av_frame_free(frame);
     return ret;
 }   
 

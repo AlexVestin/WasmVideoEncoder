@@ -15,26 +15,35 @@ export default class Video {
         fr.readAsArrayBuffer(file);
         this.decoder = new VideoDecoder(this.onDecoderReady);
         this.setUpTexture();
+
+        this.framesRead = 0;
     }
 
     setUpTexture = () => {        
         this.mesh = new THREE.Mesh(
             new THREE.PlaneGeometry(2, 2),
-            new THREE.MeshBasicMaterial()
+            new THREE.MeshBasicMaterial({color: "green"})
         );
     }
 
     update = () => {
         if(!this.done) {
-            const t0 = performance.now();
             const item = this.decoder.get_next();
+            console.log(item);
             if(item === "done") {
                 this.done = true;
                 return;
            }
 
-           console.log(performance.now() - t0);
+           if(item.type === "image") {
+                console.log(item.img.length);
+                this.texData.set(item.img);
+                this.tex.needsUpdate = true;
+           }
+
+          
         }
+
     }
 
     convertTimeToFrame = (time) => Math.floor((time*this.info.fps) - (this.config.start * this.info.fps));
@@ -47,7 +56,11 @@ export default class Video {
     onDecoderReady = () => {
         if(this.loaded) {
             this.info = this.decoder.init(this.bytes);
-            this.tex = new THREE.DataTexture(this.texData, this.info.width, this.info.height, THREE.RGBFormat, THREE.UnsignedByteType);
+            this.texData = new Uint8Array(this.info[2] * this.info[3] * 3);
+            console.log(this.info[2] * this.info[3] * 3);
+            this.tex = new THREE.DataTexture(this.texData, this.info[2], this.info[3], THREE.RGBFormat, THREE.UnsignedByteType);
+            this.tex.generateMipmaps = false;
+            this.tex.minFilter = THREE.LinearFilter;
             this.tex.flipY = true;
             this.mesh.material.map = this.tex;
             this.tex.needsUpdate = true;

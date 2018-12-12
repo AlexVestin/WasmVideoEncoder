@@ -26,7 +26,6 @@ class App extends Component {
   }
 
   animate = (event) => {
-    console.log("-------------------------");
     if(this.videoLoaded) {
       this.video.update();
     }
