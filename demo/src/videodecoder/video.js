@@ -32,6 +32,7 @@ export default class Video {
                 this.done = true;
                 return;
            }
+
            console.log(performance.now() - t0);
         }
     }
