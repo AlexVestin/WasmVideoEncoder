@@ -20,27 +20,34 @@ int main(int argc, char** argv) {
 
     int frame_size = 0, type = 0;
    
-   int ret = 1;
-    while(ret > 0) {
+    int ret = 1;
+    FILE* audio_f = fopen("audio.raw", "wb");
+    FILE* video_f = fopen("video.raw", "wb");
+
+    int count = 0;
+    while(1) {
+        count++;
+        if(count > 600)
+            break;
         uint8_t* left;
         uint8_t* right;
         uint8_t* img;
         ret = get_next(&left, &right, &img, &frame_size, &type);
-
-        if(ret == -11) {
-            ret = 1;
-        }else {
-             if(type == 0) {
-                free(img);
-            }else {
-                free(left);
-                free(right);
-            }
+        if(ret < 0) {
+            break;
         }
 
-        printf("vczxcxcsf\n");
+        if(type == 0) {
+            fwrite(img, 1, frame_size, video_f);
+            free(img);
+        }else {
+            fwrite(left, 1, frame_size, audio_f);
+            free(left);
+            free(right);
+        }
     }
-
+    fclose(audio_f);
+    fclose(video_f);
     close_muxer();
 
     return 0;

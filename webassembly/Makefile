@@ -29,15 +29,15 @@ DECODE_FILES = ./C/avio_read.c
 
 
 DECODE_COMMON = \
-	-O3 --memory-init-file 0 \
-	-o  Demux8.js\
+	-O3 \
+	-o  Demux.js\
 	-s WASM=1 \
 	-s ALLOW_MEMORY_GROWTH=1 \
 	-s EXPORTED_FUNCTIONS=$(DECODE_FUNCTIONS) \
 	-s MODULARIZE=1 \
+	-s NO_FILESYSTEM=1\
 	-s EXPORT_NAME="'Demuxer8'" \
-	-s ASSERTIONS=1
-
+	-s TOTAL_MEMORY=1024MB
 demux.js:
 	emcc -I./build/em/include $(DECODE_FILES) $(DECODE_COMMON) $(DECODE_BC) 
 

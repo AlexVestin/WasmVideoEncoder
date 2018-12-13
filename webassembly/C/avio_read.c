@@ -128,11 +128,12 @@ static int decode_audio(uint8_t** left, uint8_t** right, int* frame_size) {
 
     uint8_t* buf;
 
+
     int tsize = 0;
     while(dec_ret >= 0) {
         dec_ret = avcodec_receive_frame(audio_dec_ctx, frame);            
         if(dec_ret == AVERROR(EAGAIN) || dec_ret == AVERROR_EOF) {
-            return -11;
+            return decoded;
         }
         else if (dec_ret < 0) {
             printf("ERROR IN DECODING \n");
@@ -174,7 +175,6 @@ static int decode_audio(uint8_t** left, uint8_t** right, int* frame_size) {
             max_dst_nb_samples = dst_nb_samples = av_rescale_rnd( frame->nb_samples, dst_rate, src_rate, AV_ROUND_UP);
             dst_nb_channels = av_get_channel_layout_nb_channels(dst_ch_layout);
             ret = av_samples_alloc_array_and_samples(&dst_data, &dst_linesize, 2, dst_nb_samples, dst_sample_fmt, 0);
-
             if(ret < 0 ) {
                 printf("couldnt alloc dest samples: %s \n", av_err2str(ret));
                 exit(1);
@@ -209,7 +209,6 @@ static int decode_audio(uint8_t** left, uint8_t** right, int* frame_size) {
         memcpy(tmp_left + tsize, dst_data[0], split);
         memcpy(tmp_right + tsize, dst_data[1], split);            
         tsize += split;
-
         *frame_size = tsize;
         *left = tmp_left;
         *right = tmp_right;
@@ -230,20 +229,17 @@ int decode_packet(uint8_t** data, int* frame_size)
         return dec_ret;
     }
 
-    int count = 0;
 
     while(dec_ret >= 0) {
         dec_ret = avcodec_receive_frame(video_dec_ctx, frame);            
-        if(dec_ret == AVERROR(EAGAIN) || dec_ret == AVERROR_EOF) {
+        if(dec_ret == AVERROR(EAGAIN) || dec_ret == AVERROR_EOF) { 
             return decoded;
         }
         else if (dec_ret < 0) {
             printf("Error in video decoding \n");
             exit(0);
         }
-        count++;
-        if(count > 1)
-            printf("WHHHHHHHHHHHHHHHAT THE FUCK\n");
+
 
         if(!image_inited && frame->format != -1) {
             video_dec_ctx->pix_fmt = frame->format;
@@ -429,8 +425,6 @@ int get_next(uint8_t** lb, uint8_t** rb, uint8_t** img, int* size, int* type) {
         return -1;
     }
 
-    
-    AVPacket orig_pkt = pkt;
     if(pkt.stream_index == video_stream_idx) {
         ret = decode_packet(img, &idummy);
         *size = video_dec_ctx->width * video_dec_ctx->height *3;
@@ -438,9 +432,9 @@ int get_next(uint8_t** lb, uint8_t** rb, uint8_t** img, int* size, int* type) {
         ret = decode_audio(lb, rb, &s);
         *size = s;
     }
+    
     *type = pkt.stream_index;
     av_frame_unref(frame);
-    av_packet_unref(&orig_pkt);
     return ret;
 }   
 
