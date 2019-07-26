@@ -2,7 +2,7 @@
 
 # WasmVideoEncoder
 Video utils for the browser using FFmpeg with WebAssembly, primarily developed for use in [musicvid.org](https://github.com/alexvestin/musicvid.org).
-Currently encodes raw image and audio data, and muxes into an libx264 format (x264 video, mp3 audio).
+Currently encodes raw image and audio data, and muxes into mp4 format (x264 video, mp3 audio).
 
 Example usage in the demo folder, it's the code for the demo website linked earlier.
 
