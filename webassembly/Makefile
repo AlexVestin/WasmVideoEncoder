@@ -1,27 +1,34 @@
 ENCODE_BC = ffmpeg.bc
 ENCODE_DEPS = \
-	./build/em/lib/libmp3lame.so \
-	./build/em/lib/libx264.so \
+	./build/em/lib/libx264.a \
+	./build/em/lib/libavcodec.a \
+	./build/em/lib/libavformat.a \
+	./build/em/lib/libswresample.a \
+	./build/em/lib/libswscale.a \
+	./build/em/lib/libavutil.a \
+	./build/em/lib/libavfilter.a \
+	./build/em/lib/libmp3lame.a \
 	#./build/em/lib/libopus.so \
 	#./build/em/lib/libvpx.so
 
 all: mp4
 mp4: ffmpeg.js
 
-ENCODE_FILES = ./C/avio_write.c ./C/extra.c
+ENCODE_FILES = ./C/avio_write.c
 ENCODE_FUNCTIONS = "[ \
 		'_open_audio', '_add_audio_frame', '_add_video_frame', \
-		'_open_video', '_close_stream', '_free_buffer', '_write_header']"
+		'_open_video', '_close_stream', '_free_buffer', '_write_header', '_free']"
 
 ENCODE_COMMON = \
 	-O3 \
 	-o WasmEncoder1t.js\
 	-s EXPORTED_FUNCTIONS=$(ENCODE_FUNCTIONS) \
+	-s TOTAL_MEMORY=2000MB \
+	-s MODULARIZE=1 \
+	-s EXPORT_NAME="WasmEncoder" \
 	-s USE_PTHREADS=1 \
-	-s PTHREAD_POOL_SIZE=8 \
-	-s ASSERTIONS=0 \
-	-s TOTAL_MEMORY=1073741824 \
-
+	-s ALLOW_BLOCKING_ON_MAIN_THREAD=1 \
+	
 
 DECODE_BC = ffmpeg_dec.bc
 DECODE_FUNCTIONS ="['_init_muxer', '_get_next_frame', '_set_frame', '_close_muxer', '_get_next']"
@@ -30,6 +37,7 @@ DECODE_FILES = ./C/avio_read.c
 
 DECODE_COMMON = \
 	-O3 \
+	--enable-bulk-memory \
 	-o  Demux.js\
 	-s WASM=1 \
 	-s ALLOW_MEMORY_GROWTH=1 \
@@ -42,4 +50,5 @@ demux.js:
 	emcc -I./build/em/include $(DECODE_FILES) $(DECODE_COMMON) $(DECODE_BC) 
 
 encode.js:
-	emcc -I./build/em/include $(ENCODE_FILES) $(ENCODE_COMMON) $(ENCODE_BC) $(ENCODE_DEPS) 
+	emcc -I./build/em/include $(ENCODE_FILES) $(ENCODE_COMMON) $(ENCODE_BC) $(ENCODE_DEPS) && \
+	./install.sh

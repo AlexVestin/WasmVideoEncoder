@@ -49,6 +49,7 @@ float* audio_buffer_left;
 float* audio_buffer_right;
 int audio_buffer_size, max_audio_buffer_size;
 
+const int BUFFER_ADD_SIZE = 32*1048576;
 
 static int64_t seek (void *opaque, int64_t offset, int whence) {
     struct buffer_data *bd = (struct buffer_data *)opaque;
@@ -74,24 +75,27 @@ static int64_t seek (void *opaque, int64_t offset, int whence) {
 }
 
 static int write_packet(void *opaque, uint8_t *buf, int buf_size) {
-    
     struct buffer_data *bd = (struct buffer_data *)opaque;
+    
+    
     while (buf_size > bd->room) {
         int64_t offset = bd->ptr - bd->buf;
-        bd->buf = av_realloc_f(bd->buf, 2, bd->size);
+        bd->buf = av_realloc_f(bd->buf, 1, bd->size + BUFFER_ADD_SIZE);
         if (!bd->buf)
             return AVERROR(ENOMEM);
-        bd->size *= 2;
+        bd->size += BUFFER_ADD_SIZE;
         bd->ptr = bd->buf + offset;
         bd->room = bd->size - offset;
     }
+    
     //printf("write packet pkt_size:%d used_buf_size:%zu buf_size:%zu buf_room:%zu\n", buf_size, bd->ptr-bd->buf, bd->size, bd->room);
 
     memcpy(bd->ptr, buf, buf_size);
     bd->ptr  += buf_size;
     bd->room -= buf_size;
     
-    //free(buf);
+    free(&buf);
+    
     return buf_size;
 }
 
@@ -102,7 +106,6 @@ static void encode(AVFrame *frame, AVCodecContext* cod, AVStream* out, AVPacket*
         //printf(stderr, "Error sending a frame for encoding\n");
         exit(1);
     }
-
     while (ret >= 0) {
         ret = avcodec_receive_packet(cod, p);
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF){
@@ -119,6 +122,7 @@ static void encode(AVFrame *frame, AVCodecContext* cod, AVStream* out, AVPacket*
         av_packet_rescale_ts(p, cod->time_base, out->time_base);
         av_write_frame(ofmt_ctx, p);
         av_packet_unref(p);
+        
     }
 }
 
@@ -184,14 +188,19 @@ void rgb2yuv420p(uint8_t *destination, uint8_t *rgb, size_t width, size_t height
     }  
 }
 
+int count = 0;
 void add_video_frame(uint8_t* frame){ 
+
+   
     flip_vertically(frame);
     ret = av_frame_make_writable(video_frame);
 
     // ~15% faster than sws_scale
     int size = (video_ctx->width * video_ctx->height * 3) / 2;
     uint8_t* yuv_buffer = malloc(size);
+
     rgb2yuv420p(yuv_buffer, frame, video_ctx->width, video_ctx->height);
+
     av_image_fill_arrays (
         (AVPicture*)video_frame->data,
         video_frame->linesize, 
@@ -203,7 +212,13 @@ void add_video_frame(uint8_t* frame){
     );
 
     video_frame->pts = frame_idx++;
+
     encode(video_frame, video_ctx, video_stream, pkt);
+    //av_frame_free(video_frame);
+    if( !(count++ % 300)) {
+        printf("frame nr: %d buf size: %d room: %d \n", count, bd.size, bd.room);
+    }
+    
     free(yuv_buffer);
 }
 
@@ -211,8 +226,7 @@ void add_video_frame(uint8_t* frame){
 void write_header() {
     ret = avformat_write_header(ofmt_ctx, NULL);
     if (ret < 0) {
-        //printf(stderr, "Error occurred: %s\n", av_err2str(ret));
-        //printf(stderr, "Error occurred when opening output file\n");
+        printf("Error occurred when opening output file\n");
         exit(1);
     } 
 }
@@ -220,37 +234,42 @@ void write_header() {
 void open_video(int w, int h, int fps, int br, int preset_idx, int codec_idx, int format_idx){
     const char* formats[] = {"webm",  "mp4", "mp3", "aac", "ogg" };
     const char* codecs[] = { "libvpx", "libx264" };
-    AVOutputFormat* of = av_guess_format(formats[format_idx], 0, 0);
-    bd.ptr  = bd.buf = av_malloc(bd_buf_size);
-
+    AVOutputFormat* of = av_guess_format(formats[1], 0, 0);
+    bd.ptr  = bd.buf = av_malloc(BUFFER_ADD_SIZE * 4);
+    
     if (!bd.buf) {
         printf("BUF ERROR\n");
         ret = AVERROR(ENOMEM);
     }
-    bd.size = bd.room = bd_buf_size;
+    bd.size = bd.room = BUFFER_ADD_SIZE * 4;
     
     avio_ctx_buffer = av_malloc(avio_ctx_buffer_size);
+    printf("Allocating buffer...\n");
     if (!avio_ctx_buffer) {
-        ret = AVERROR(ENOMEM);
+        ret = AVERROR(ENOMEM);   
         exit(1);
     }
+    printf("Allocating avio context...\n");
     avio_ctx = avio_alloc_context(avio_ctx_buffer, avio_ctx_buffer_size, 1, &bd, NULL, &write_packet, &seek);
     if (!avio_ctx) {
         ret = AVERROR(ENOMEM);
         exit(1);
     }
+    printf("Allocating output context...\n");
     ret = avformat_alloc_output_context2(&ofmt_ctx, of, NULL, NULL);
     if (ret < 0) {
-        printf(stderr, "Could not create output context\n");
+        printf("Could not create output context\n");
+        exit(1);
+    }
+    printf("Finding encoder %s...\n", codecs[codec_idx]);
+    AVCodec* video_codec = avcodec_find_encoder_by_name(codecs[codec_idx]);
+    printf("Gotten... %p\n", video_codec);
+    if (!video_codec) {
+        printf("Codec '%s' not found\n", codec_name);
         exit(1);
     }
     
-    AVCodec* video_codec = avcodec_find_encoder_by_name(codecs[codec_idx]);
-    if (!video_codec) {
-        printf(stderr, "Codec '%s' not found\n", codec_name);
-        exit(1);
-    }
-   
+    printf("Allocating codec context...\n");
     video_ctx = avcodec_alloc_context3(video_codec);
     video_ctx->width = w;
     video_ctx->height = h;
@@ -258,15 +277,13 @@ void open_video(int w, int h, int fps, int br, int preset_idx, int codec_idx, in
     video_ctx->time_base.den = fps;
     video_ctx->bit_rate = br; 
     
-    video_ctx->gop_size = 10;
-    video_ctx->max_b_frames = 1;
     video_ctx->pix_fmt = AV_PIX_FMT_YUV420P;
-    //video_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+    video_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
     const char *presets[] = { "ultrafast", "veryfast", "fast", "medium", "slow", "veryslow" };
     
     av_opt_set(video_ctx->priv_data, "preset", presets[preset_idx], 0);
-    
+    printf("Opening codec...\n");
     if(avcodec_open2(video_ctx, video_codec, NULL) < 0) {
         printf("couldnt open codec\n");
         exit(1);
@@ -279,12 +296,13 @@ void open_video(int w, int h, int fps, int br, int preset_idx, int codec_idx, in
     video_frame->height = h;
     ret = av_frame_get_buffer(video_frame, 0);
 
+    printf("Allocating packet...\n");
     pkt = av_packet_alloc();
     if(!pkt){
         printf("errror packer\n");
         exit(1);
     }
-        
+    printf("Allocating stream...\n");
     video_stream = avformat_new_stream(ofmt_ctx, NULL);  
     if(!video_stream){
         printf(stderr, "error making stream\n");
@@ -299,35 +317,42 @@ void open_video(int w, int h, int fps, int br, int preset_idx, int codec_idx, in
 
     video_stream->time_base = video_ctx->time_base;
     video_stream->id = ofmt_ctx->nb_streams-1;
+    printf("Setting parameters...\n");
     ret = avcodec_parameters_from_context(video_stream->codecpar, video_ctx);
 
     frame_idx = 0;
     have_video = 1;
+    printf("Done opening video...\n");
 } 
 
 uint8_t* close_stream(int* size) {
+    printf("Flushing video...\n");
     if(have_video)encode(NULL, video_ctx, video_stream, pkt);
+    printf("Flushing audio...\n");
     if(have_audio)encode(NULL, audio_ctx, audio_stream, pkt);
-    
+
+    printf("Writing trailer...\n");
     av_write_trailer(ofmt_ctx);
+    printf("Freeing context...\n");
     avformat_free_context(ofmt_ctx);
     
+    printf("Closing video...\n");
+
     if (have_video) {
         avcodec_free_context(&video_ctx);    
         av_frame_free(&video_frame);
     }
-    
+    printf("Closing audio...\n");
     if (have_audio) {    
         avcodec_free_context(&audio_ctx);
         av_frame_free(&audio_frame);
         swr_free(&audio_swr_ctx);
-        free(audio_buffer_right);
-        free(audio_buffer_left);
     }
-    
+
+    printf("Freeing buffers...\n");
     av_freep(&avio_ctx->buffer);
     av_free(avio_ctx);
-    
+    printf("Returning...\n");
     *size = bd.size - bd.room;
     return bd.buf; 
 }   
@@ -341,7 +366,7 @@ static AVFrame *alloc_audio_frame() {
     int ret;
 
     if (!audio_frame) {
-        //printf(stderr, "Error allocating an audio frame\n");
+        printf(stderr, "Error allocating an audio frame\n");
         exit(1);
     }
 
@@ -352,7 +377,7 @@ static AVFrame *alloc_audio_frame() {
 
     ret = av_frame_get_buffer(audio_frame, 4);
     if (ret < 0) {
-        //printf(stderr, "Error allocating an audio buffer\n");
+        printf(stderr, "Error allocating an audio buffer\n");
         exit(1);
     }
     
@@ -370,61 +395,46 @@ static int check_sample_fmt(const AVCodec *codec, enum AVSampleFormat sample_fmt
 }
 
 
+int getAudioFrameSize() {
+    if(!have_audio || !audio_frame) {
+        printf("Haven't initialized the audio");
+        exit(1);
+    }
+    return audio_frame->nb_samples;
+}
+
 void add_audio_frame(float* left, float* right, int size) {
-    if(size + audio_buffer_size > max_audio_buffer_size) {
-        audio_buffer_left = realloc(audio_buffer_left, (size + audio_buffer_size) * 4);
-        audio_buffer_right = realloc(audio_buffer_right, (size + audio_buffer_size) * 4);
+
+    ret = av_frame_make_writable(audio_frame);
+    if (ret < 0) {
+        printf("error\n");
+        exit(1);
     }
 
-    memcpy(audio_buffer_left + audio_buffer_size, left, size * sizeof(float));
-    memcpy(audio_buffer_right + audio_buffer_size, right, size * sizeof(float));
-    audio_buffer_size += size;
-    int count = 0, ret;
+    audio_frame->data[0] = (uint8_t*)left;
+    audio_frame->data[1] = (uint8_t*)right;
+    dst_nb_samples =
+        av_rescale_rnd(swr_get_delay(audio_swr_ctx, audio_ctx->sample_rate) +
+                            audio_frame->nb_samples,
+                        src_sample_rate, audio_ctx->sample_rate, AV_ROUND_UP);
 
-    while(audio_buffer_size > audio_frame->nb_samples) {
-        ret = av_frame_make_writable(audio_frame);
-        if(ret < 0){
-            printf("error\n");
-            exit(1);
-        }
-        
-        audio_frame->data[0] = audio_buffer_left;
-        audio_frame->data[1] = audio_buffer_right;
+    ret =
+        swr_convert(audio_swr_ctx, audio_frame->data, dst_nb_samples,
+                    (const uint8_t**)audio_frame->data, audio_frame->nb_samples);
 
-        dst_nb_samples = av_rescale_rnd (
-            swr_get_delay(audio_swr_ctx, audio_ctx->sample_rate) + audio_frame->nb_samples, 
-            src_sample_rate, 
-            audio_ctx->sample_rate,
-            AV_ROUND_UP
-        );   
-
-        ret = swr_convert (
-            audio_swr_ctx,
-            audio_frame->data, 
-            dst_nb_samples,
-            (const uint8_t **)audio_frame->data, 
-            audio_frame->nb_samples
-        );
-
-        if(ret < 0){
-            printf("error converting \n");
-            exit(1);
-        }
-            
-        audio_frame->pts = av_rescale_q(
-            frame_bytes, 
-            (AVRational){1, audio_ctx->sample_rate}, 
-            audio_ctx->time_base
-        );
-
-        frame_bytes += dst_nb_samples;
-        encode(audio_frame, audio_ctx, audio_stream, pkt);
-
-        //Shift array buffer
-        memcpy(audio_buffer_left,  audio_buffer_left  + audio_frame->nb_samples, audio_buffer_size*sizeof(float));
-        memcpy(audio_buffer_right, audio_buffer_right + audio_frame->nb_samples, audio_buffer_size*sizeof(float));
-        audio_buffer_size -= audio_frame->nb_samples;
+    if (ret < 0) {
+        printf("Error in swr_convert, ret: %d", ret);
+        exit(1);
     }
+    audio_frame->pts =
+        av_rescale_q(frame_bytes, (AVRational){1, audio_ctx->sample_rate},
+                    audio_ctx->time_base);
+
+    frame_bytes += dst_nb_samples;
+
+    AVPacket audio_pkt;
+    av_init_packet(&audio_pkt);
+    encode(audio_frame, audio_ctx, audio_stream, &audio_pkt);
 }
 
 void test(){
@@ -438,9 +448,9 @@ void open_audio(int sample_rate, int nr_channels, int bit_rate, int codec_idx) {
 
     const int codecs[] = { AV_CODEC_ID_OPUS, AV_CODEC_ID_AAC, AV_CODEC_ID_MP3 };    
     
-    AVCodec* ac = avcodec_find_encoder(codecs[codec_idx]);
+    AVCodec* ac = avcodec_find_encoder(codecs[2]);
     if(!ac) {
-        printf("error making audio codec context\n");
+        printf("Error creating audio codec context\n");
         exit(-1);
     }
 
@@ -508,12 +518,9 @@ void open_audio(int sample_rate, int nr_channels, int bit_rate, int codec_idx) {
         exit(1);
     }
 
-    audio_buffer_size = frame_bytes = 0; 
-    audio_buffer_left   = malloc(sample_rate * 4);
-    audio_buffer_right  = malloc(sample_rate * 4);
-    max_audio_buffer_size = sample_rate;
 
     have_audio = 1;
+    printf("%d \n", getAudioFrameSize());
 }
 
 
