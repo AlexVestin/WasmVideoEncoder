@@ -3,10 +3,14 @@
 
 void write_audio_frame();
 void free_buffer();
-void open_video(int, int, int, int, int, int, int); 
+void open_video(int, int, int, int, int, int, int, int); 
 void add_audio_frame(float*, float*, int);
 void open_audio_pre(float*, float*, int);
 void open_audio( int, int, int, int);
+
+int get_log_size();
+char* get_log();
+
 
 void write_header();
 uint8_t* close_stream();

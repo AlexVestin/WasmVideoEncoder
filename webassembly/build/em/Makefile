@@ -12,8 +12,7 @@ all: ffmpeg
 libmp3lame:
 	cd ../dependencies/lame && \
 	git reset --hard && \
-	patch -p2 < ../../lame-fix-ld.patch && \
-	export CFLAGS="-s USE_PTHREADS=1 -Wno-unknown-warning-option" && \
+	export CFLAGS="-Wno-unknown-warning-option" && \
 	emconfigure ./configure \
 		--prefix="$$(pwd)/../../em" \
 		--enable-static \
@@ -30,10 +29,11 @@ libx264:
 	cd ../dependencies/x264 && \
 	emconfigure ./configure \
 		--prefix="$$(pwd)/../../em" \
-		--extra-cflags="-c -s USE_PTHREADS=1 -Wno-unknown-warning-option" \
+		--extra-cflags="-c -Wno-unknown-warning-option" \
 		--extra-ldflags="-lpthread" \
 		--host=x86-none-linux \
 		--disable-cli \
+		--disable-thread \
 		--enable-static \
 		--disable-shared \
 		--disable-opencl \
@@ -61,6 +61,7 @@ FFMPEG_COMMON_ARGS = \
 	--disable-runtime-cpudetect \
 	--disable-asm \
 	--disable-fast-unaligned \
+	--disable-pthreads \
 	--disable-w32threads \
 	--disable-os2threads \
 	--disable-debug \
@@ -99,22 +100,10 @@ ffmpeg: $(SHARED_DEPS)
 		--enable-gpl \
 		--enable-libx264 \
 		--enable-libmp3lame \
-		--extra-cflags="-s USE_PTHREADS=1 -pthread -I../../em/include" \
-		--extra-ldflags="-Wl,--shared-memory -lpthread -L../../em/lib -s LLD_REPORT_UNDEFINED" \
+		--extra-cflags="-I../../em/include" \
+		--extra-ldflags="-L../../em/lib -s LLD_REPORT_UNDEFINED" \
 		&& \
-	sed -i 's/HAVE_RINT 0/HAVE_RINT 1/g' config.h && \
-	sed -i 's/HAVE_LRINT 0/HAVE_LRINT 1/g' config.h && \
-	sed -i 's/HAVE_LRINTF 0/HAVE_LRINTF 1/g' config.h && \
-	sed -i 's/HAVE_ROUND 0/HAVE_ROUND 1/g' config.h && \
-	sed -i 's/HAVE_ROUNDF 0/HAVE_ROUNDF 1/g' config.h && \
-	sed -i 's/HAVE_TRUNC 0/HAVE_TRUNC 1/g' config.h && \
-	sed -i 's/HAVE_TRUNCF 0/HAVE_TRUNCF 1/g' config.h && \
-	sed -i 's/HAVE_HYPOT 0/HAVE_HYPOT 1/g' config.h && \
-	sed -i 's/HAVE_CBRTF 0/HAVE_CBRTF 1/g' config.h && \
-	sed -i 's/HAVE_CBRT 0/HAVE_CBRT 1/g' config.h && \
-	sed -i 's/HAVE_COPYSIGN 0/HAVE_COPYSIGN 1/g' config.h && \
-	sed -i 's/HAVE_ERF 0/HAVE_ERF 1/g' config.h && \
 	emmake make -j8 && \
 	emmake make install && \
-	cp ../../em/bin/ffmpeg ../../../ffmpeg.bc
+	cp ../../em/bin/ffmpeg ../../../ffmpeg_seq.bc
 

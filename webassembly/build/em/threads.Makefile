@@ -1,65 +1,22 @@
 
 
 
-ENCODERS = libx264 libmp3lame aac libvpx_vp8 libopus mjpeg
-MUXERS = mp4 mp3 null webm ogg null image2
+ENCODERS = libmp3lame libx264 aac
+MUXERS = mp4 null
 
-SHARED_DEPS = libmp3lame libx264 libopus libvpx
+SHARED_DEPS = libmp3lame libx264
 FFMPEG_PC_PATH = ../../em/lib/pkgconfig
 
 all: ffmpeg
 
-build/opus/configure:
-	cd ../dependencies/opus && ./autogen.sh
-
-libopus: build/opus/configure
-	cd ../dependencies/opus && \
-	git reset --hard && \
-	emconfigure ./configure \
-		CFLAGS=-O3 \
-		--prefix="$$(pwd)/../../em" \
-		--disable-static \
-		--disable-doc \
-		--disable-extra-programs \
-		--disable-asm \
-		--disable-rtcd \
-		--disable-intrinsics \
-		&& \
-	emmake make -j8 && \
-	emmake make install
-
-libvpx:
-	cd ../dependencies/libvpx && \
-	git reset --hard && \
-	emconfigure ./configure \
-		--prefix="$$(pwd)/../../em" \
-		--target=generic-gnu \
-		--disable-dependency-tracking \
-		--disable-multithread \
-		--disable-runtime-cpu-detect \
-		--enable-shared \
-		--disable-static \
-		\
-		--disable-examples \
-		--disable-docs \
-		--disable-unit-tests \
-		--disable-webm-io \
-		--disable-libyuv \
-		--disable-vp8-decoder \
-		--disable-vp9 \
-		&& \
-	emmake make -j8 && \
-	emmake make install
-
-
 libmp3lame:
 	cd ../dependencies/lame && \
 	git reset --hard && \
-	patch -p1 < ../../lame-configure.patch && \
+	export CFLAGS="-s USE_PTHREADS=1 -Wno-unknown-warning-option" && \
 	emconfigure ./configure \
 		--prefix="$$(pwd)/../../em" \
-		--disable-static \
-		\
+		--enable-static \
+		--host=x86-none-linux \
 		--disable-gtktest \
 		--disable-analyzer-hooks \
 		--disable-decoder \
@@ -70,15 +27,18 @@ libmp3lame:
 
 libx264:
 	cd ../dependencies/x264 && \
-	git reset --hard && \
-	patch -p1 < ../../x264-configure.patch && \
 	emconfigure ./configure \
 		--prefix="$$(pwd)/../../em" \
-		--extra-cflags="-Wno-unknown-warning-option" \
+		--extra-cflags="-c -s USE_PTHREADS=1 -Wno-unknown-warning-option" \
+		--extra-ldflags="-lpthread" \
+		--host=x86-none-linux \
 		--disable-cli \
-		--enable-shared \
+		--enable-static \
+		--disable-shared \
 		--disable-opencl \
-		--disable-thread \
+		--disable-interlaced \
+		--bit-depth=8 \
+		--chroma-format=420 \
 		--disable-asm \
 		\
 		--disable-avs \
@@ -93,32 +53,32 @@ libx264:
 
 FFMPEG_COMMON_ARGS = \
 	--cc=emcc \
+	--ranlib=emranlib \
 	--enable-cross-compile \
 	--target-os=none \
 	--arch=x86 \
 	--disable-runtime-cpudetect \
 	--disable-asm \
 	--disable-fast-unaligned \
-	--disable-pthreads \
 	--disable-w32threads \
 	--disable-os2threads \
 	--disable-debug \
 	--disable-stripping \
+	--disable-safe-bitstream-reader \
 	\
 	--disable-all \
 	--enable-ffmpeg \
 	--enable-avcodec \
 	--enable-avformat \
-	--enable-avutil \
+	--enable-avfilter \
 	--enable-swresample \
 	--enable-swscale \
-	--enable-avfilter \
 	--disable-network \
 	--disable-d3d11va \
 	--disable-dxva2 \
 	--disable-vaapi \
 	--disable-vdpau \
-	--disable-protocol=file \
+	--enable-protocol=file \
 	--disable-bzlib \
 	--disable-iconv \
 	--disable-libxcb \
@@ -130,18 +90,29 @@ FFMPEG_COMMON_ARGS = \
 
 ffmpeg: $(SHARED_DEPS)
 	cd ../dependencies/ffmpeg && \
-	git reset --hard && \
 	EM_PKG_CONFIG_PATH=../../em/lib/pkgconfig emconfigure ./configure \
 		--prefix="$$(pwd)/../../em" \
 		$(FFMPEG_COMMON_ARGS) \
 		$(addprefix --enable-encoder=,$(ENCODERS)) \
 		$(addprefix --enable-muxer=,$(MUXERS)) \
 		--enable-gpl \
-		--enable-libmp3lame \
 		--enable-libx264 \
-		--extra-cflags="-I../../em/include" \
-		--extra-ldflags="-L../../em/lib" \
+		--enable-libmp3lame \
+		--extra-cflags="-s USE_PTHREADS=1 -pthread -I../../em/include" \
+		--extra-ldflags="-Wl,--shared-memory -lpthread -L../../em/lib -s LLD_REPORT_UNDEFINED" \
 		&& \
+	sed -i 's/HAVE_RINT 0/HAVE_RINT 1/g' config.h && \
+	sed -i 's/HAVE_LRINT 0/HAVE_LRINT 1/g' config.h && \
+	sed -i 's/HAVE_LRINTF 0/HAVE_LRINTF 1/g' config.h && \
+	sed -i 's/HAVE_ROUND 0/HAVE_ROUND 1/g' config.h && \
+	sed -i 's/HAVE_ROUNDF 0/HAVE_ROUNDF 1/g' config.h && \
+	sed -i 's/HAVE_TRUNC 0/HAVE_TRUNC 1/g' config.h && \
+	sed -i 's/HAVE_TRUNCF 0/HAVE_TRUNCF 1/g' config.h && \
+	sed -i 's/HAVE_HYPOT 0/HAVE_HYPOT 1/g' config.h && \
+	sed -i 's/HAVE_CBRTF 0/HAVE_CBRTF 1/g' config.h && \
+	sed -i 's/HAVE_CBRT 0/HAVE_CBRT 1/g' config.h && \
+	sed -i 's/HAVE_COPYSIGN 0/HAVE_COPYSIGN 1/g' config.h && \
+	sed -i 's/HAVE_ERF 0/HAVE_ERF 1/g' config.h && \
 	emmake make -j8 && \
 	emmake make install && \
 	cp ../../em/bin/ffmpeg ../../../ffmpeg.bc
