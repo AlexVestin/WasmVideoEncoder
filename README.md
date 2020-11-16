@@ -10,8 +10,7 @@ See ```webassembly/C/avio_write.c``` for the main code of the encoder and ```web
 
 Pthreads to be implemented, but will hold off since they aren't very stable at the moment.
 
-### LICENSE
-- Code written by me is MIT, the license of the dependencies (ffmpeg, libvpx, lame etc.) varies.
+
 
 ### Build
 Makefile & patches from [ffmpeg.js](https://github.com/Kagami/ffmpeg.js/) / [videoconverter.js](https://bgrins.github.io/videoconverter.js/)
