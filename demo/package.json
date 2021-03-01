@@ -8,7 +8,7 @@
     "react": "^16.6.3",
     "react-dom": "^16.6.3",
     "react-scripts": "2.1.1",
-    "three": "^0.98.0"
+    "three": "^0.125.0"
   },
   "scripts": {
     "start": "react-scripts start",
